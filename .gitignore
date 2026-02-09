@@ -2,3 +2,6 @@
 split/
 *.csv
 ---------------
+# jupyter
+.ipynb_checkpoints/
+-----------------------------
