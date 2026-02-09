@@ -1,4 +1,4 @@
-># Credit-Card-Fraud-Detection
+># *** Credit-Card-Fraud-Detection ***
 ---
 >## Project Overview
 - Classification task aims to build model which predicts the transaction process is fraud or not, and It has 2 properties:
