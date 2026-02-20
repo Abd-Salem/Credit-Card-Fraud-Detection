@@ -1,3 +1,4 @@
+RANDOM_STATE = 34       #random state
 
 # dataset parameters (paths, features)
 DATASET = {
