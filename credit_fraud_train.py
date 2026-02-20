@@ -59,10 +59,20 @@ def train_model_1():
          f'{report['weighted avg']['f1-score']:.3f}', f'{report['harmonic avg']:.3f}']
     ]
     headers = ['Model','Accuracy','Macro Avg', 'Weighted Avg', 'Harmonic Avg']     # table headers
-    print('####################################################################################')
+    print('####################################################################################\n')
     print('\t' * 8 +'** Summary Statistics **')
     print(tabulate(data,headers=headers, tablefmt='github'))
 
 
 if __name__ == '__main__':
+    
     train_model_1()
+#     | Class         | Precision     | Recall     | F1 - score   |
+#     | ------------- | ------------- | ---------- | ------------ |
+#     | 1(Fraud)      | 0.875         | 0.544      | 0.6712       |
+#     | 0(Genuine)    | 0.999         | 0.9999     | 0.9996       |
+#     #############################################################################################
+#                                ** Summary Statistics **
+#     |       Model           |  Accuracy    |   Macro Avg   |  Weighted Avg    |   Harmonic Avg   |
+#     | --------------------- | ------------ | ------------- | ---------------- | ---------------- |
+#     | Logistic Regression   |     0.999    |      0.835    |      0.999       |       0.803      |
