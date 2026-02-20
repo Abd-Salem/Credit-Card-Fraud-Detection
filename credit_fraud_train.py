@@ -65,7 +65,7 @@ def train_model_1():
 
 
 if __name__ == '__main__':
-    
+
     train_model_1()
 #     | Class         | Precision     | Recall     | F1 - score   |
 #     | ------------- | ------------- | ---------- | ------------ |
