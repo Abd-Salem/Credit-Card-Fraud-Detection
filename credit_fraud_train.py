@@ -5,7 +5,7 @@ from credit_fraud_utils_data import prepare_data, load_data
 from credit_fraud_utils_eval import model_eval_report, pr_threshold_curve
 from tabulate import tabulate
 
-def baseline():
+def baseline_model():
     '''
     - Train our dataset using logistic regression algorithm (baseline model)
     - No techniques are used for Imbalanced data
@@ -66,11 +66,11 @@ def baseline():
 
 if __name__ == '__main__':
 
-    baseline()
+    baseline_model()
 #     | Class         | Precision     | Recall     | F1 - score   |
 #     | ------------- | ------------- | ---------- | ------------ |
-#     | 1(Fraud)      | 0.875         | 0.544      | 0.6712       |
-#     | 0(Genuine)    | 0.999         | 0.9999     | 0.9996       |
+#     | 1 (Fraud)      | 0.875         | 0.544      | 0.6712       |
+#     | 0 (Genuine)    | 0.999         | 0.9999     | 0.9996       |
 #     #############################################################################################
 #                                ** Summary Statistics **
 #     |       Model           |  Accuracy    |   Macro Avg   |  Weighted Avg    |   Harmonic Avg   |
