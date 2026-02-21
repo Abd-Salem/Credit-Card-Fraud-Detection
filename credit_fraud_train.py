@@ -2,10 +2,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import  Pipeline
 import config
 from credit_fraud_utils_data import prepare_data, load_data
-from credit_fraud_utils_eval import model_eval_report, pr_curve_plot
+from credit_fraud_utils_eval import model_eval_report, pr_threshold_curve
 from tabulate import tabulate
 
-def train_model_1():
+def baseline():
     '''
     - Train our dataset using logistic regression algorithm (baseline model)
     - No techniques are used for Imbalanced data
@@ -37,7 +37,7 @@ def train_model_1():
     model = pipeline.fit(train_df[input_cols_names], train_df[config.DATASET['target_feature']])
 
     # precision recall curve for val dataset as inference
-    pr_curve_plot(model, val_df[input_cols_names], val_df[config.DATASET['target_feature']])
+    pr_threshold_curve(model, val_df[input_cols_names], val_df[config.DATASET['target_feature']])
 
     # Metrics' values
     report = model_eval_report(model, val_df[input_cols_names], val_df[config.DATASET['target_feature']])
@@ -59,14 +59,14 @@ def train_model_1():
          f'{report['weighted avg']['f1-score']:.3f}', f'{report['harmonic avg']:.3f}']
     ]
     headers = ['Model','Accuracy','Macro Avg', 'Weighted Avg', 'Harmonic Avg']     # table headers
-    print('####################################################################################\n')
+    print('#' * 85 + '\n')
     print('\t' * 8 +'** Summary Statistics **')
     print(tabulate(data,headers=headers, tablefmt='github'))
 
 
 if __name__ == '__main__':
 
-    train_model_1()
+    baseline()
 #     | Class         | Precision     | Recall     | F1 - score   |
 #     | ------------- | ------------- | ---------- | ------------ |
 #     | 1(Fraud)      | 0.875         | 0.544      | 0.6712       |

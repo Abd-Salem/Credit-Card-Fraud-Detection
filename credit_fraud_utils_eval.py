@@ -24,7 +24,7 @@ def model_eval_report(model, X, y_true):
     return report
 
 
-def pr_curve_plot(model, X, y_true):
+def pr_threshold_curve(model, X, y_true):
     '''
     Plotting precision recall curve that show precision recall values with different thresholds
     parameter:
@@ -38,6 +38,8 @@ def pr_curve_plot(model, X, y_true):
     precision, recall = precision[:-1], recall[:-1]     # exclude last value
     plt.plot(threshold, precision, linestyle = '--', color='blue', label='Precision')       # threshold vs precision
     plt.plot(threshold, recall, linestyle='--', color='red', label='Recall')            # threshold vs recall
-    plt.title('Precision Recall Curve', fontweight=12, fontstyle='italic', color='grey')
+    plt.title('Threshold VS Precision Recall', fontweight=12, fontstyle='italic', color='grey')
+    plt.xlabel('Threshold', color='green')
+    plt.ylabel('Precision-Recall', color='green')
     plt.legend(loc='best')
     plt.show()
