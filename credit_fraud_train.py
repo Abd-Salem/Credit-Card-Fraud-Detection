@@ -2,7 +2,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import  Pipeline
 import config
 from credit_fraud_utils_data import prepare_data, load_data
-from credit_fraud_utils_eval import model_eval_report, pr_threshold_curve
+from credit_fraud_utils_eval import model_eval_report, pr_curve_avg_precision_score
 from tabulate import tabulate
 
 def baseline_model():
@@ -36,8 +36,8 @@ def baseline_model():
     # train model
     model = pipeline.fit(train_df[input_cols_names], train_df[config.DATASET['target_feature']])
 
-    # precision recall curve for val dataset as inference
-    pr_threshold_curve(model, val_df[input_cols_names], val_df[config.DATASET['target_feature']])
+    # precision recall curve for val dataset
+    avg_pr_score = pr_curve_avg_precision_score(model, val_df[input_cols_names], val_df[config.DATASET['target_feature']])
 
     # Metrics' values
     report = model_eval_report(model, val_df[input_cols_names], val_df[config.DATASET['target_feature']])
@@ -56,9 +56,9 @@ def baseline_model():
     data = [
         ['Logistic Regression',
          f'{report['accuracy']:.3f}',f'{report['macro avg']['f1-score']:.3f}',
-         f'{report['weighted avg']['f1-score']:.3f}', f'{report['harmonic avg']:.3f}']
+         f'{report['weighted avg']['f1-score']:.3f}', f'{report['harmonic avg']:.3f}', f'{avg_pr_score:.3f}']
     ]
-    headers = ['Model','Accuracy','Macro Avg', 'Weighted Avg', 'Harmonic Avg']     # table headers
+    headers = ['Model','Accuracy','Macro Avg', 'Weighted Avg', 'Harmonic Avg', 'Avg Precision Score']     # table headers
     print('#' * 85 + '\n')
     print('\t' * 8 +'** Summary Statistics **')
     print(tabulate(data,headers=headers, tablefmt='github'))
@@ -69,10 +69,10 @@ if __name__ == '__main__':
     baseline_model()
 #     | Class         | Precision     | Recall     | F1 - score   |
 #     | ------------- | ------------- | ---------- | ------------ |
-#     | 1 (Fraud)      | 0.875         | 0.544      | 0.6712       |
-#     | 0 (Genuine)    | 0.999         | 0.9999     | 0.9996       |
+#     | 1 (Fraud)     | 0.875         | 0.544      | 0.6712       |
+#     | 0 (Genuine)   | 0.999         | 0.9999     | 0.9996       |
 #     #############################################################################################
 #                                ** Summary Statistics **
-#     |       Model           |  Accuracy    |   Macro Avg   |  Weighted Avg    |   Harmonic Avg   |
-#     | --------------------- | ------------ | ------------- | ---------------- | ---------------- |
-#     | Logistic Regression   |     0.999    |      0.835    |      0.999       |       0.803      |
+#     |       Model           |  Accuracy    |   Macro Avg   |  Weighted Avg    |   Harmonic Avg   |  Avg Precision Score |
+#     | --------------------- | ------------ | ------------- | ---------------- | ---------------- |----------------------|
+#     | Logistic Regression   |     0.999    |      0.835    |      0.999       |       0.803      |        0.71          |

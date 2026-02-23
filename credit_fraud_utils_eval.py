@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from scipy.stats import hmean
-from sklearn.metrics import precision_recall_curve, classification_report
+from sklearn.metrics import precision_recall_curve, classification_report, average_precision_score
 
 
 def model_eval_report(model, X, y_true):
@@ -8,7 +8,7 @@ def model_eval_report(model, X, y_true):
     Calculate metrics:
         1- precision
         2- recall
-        3- f1-score (each class - micro avg - macro avg - weighted avg)
+        3- f1-score (each class - micro avg - macro avg - weighted avg - harmonic avg)
      parameters:
         model: trained model
         X: inference data for prediction
@@ -24,7 +24,7 @@ def model_eval_report(model, X, y_true):
     return report
 
 
-def pr_threshold_curve(model, X, y_true):
+def pr_curve_avg_precision_score(model, X, y_true):
     '''
     Plotting precision recall curve that show precision recall values with different thresholds
     parameter:
@@ -43,3 +43,5 @@ def pr_threshold_curve(model, X, y_true):
     plt.ylabel('Precision-Recall', color='green')
     plt.legend(loc='best')
     plt.show()
+
+    return average_precision_score(y_true, y_proba)
