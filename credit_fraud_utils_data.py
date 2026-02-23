@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, FunctionTransformer
+from sklearn.preprocessing import StandardScaler, FunctionTransformer
 from sklearn.pipeline import  Pipeline
 from sklearn.compose import ColumnTransformer
 
@@ -65,13 +65,13 @@ def feature_transformation(*, numeric_features:list =None, categorical_features:
     # bridge the gap between numpy functions and sklearn's transformer interface
     log_trans = Pipeline([
         ('log_trans', FunctionTransformer(np.log1p)),
-        ('scaler', MinMaxScaler())
+        ('scaler', StandardScaler())
     ])
 
     # column transformation steps
     col_trans = ColumnTransformer([
         ('log_trans', log_trans, log_trans_cols),
-        ('scaler', MinMaxScaler(), numeric_features)
+        ('scaler', StandardScaler(), numeric_features)
     ], remainder='passthrough')
     return col_trans
 
