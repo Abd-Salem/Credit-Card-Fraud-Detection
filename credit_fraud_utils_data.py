@@ -1,9 +1,13 @@
 import pandas as pd
 import numpy as np
+import config
 from sklearn.preprocessing import StandardScaler, FunctionTransformer
-from sklearn.pipeline import  Pipeline
+from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
-
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.pipeline import Pipeline as imb_pipeline
+from collections import Counter
 
 def load_data(path: str):
     '''Load dataset'''
@@ -107,3 +111,41 @@ def prepare_data(df:pd.DataFrame, * , inplace=False ,numeric_features:list =None
     if not inplace:
         return df, col_trans
     return col_trans
+
+def sample_data(X, y, *, technique:str='None', factor:int =1):
+    '''
+    - Sampling data with different techniques like oversampling, undersampling or both
+    parameter:
+        X: features that will be sampled
+        y: target feature that contain classes' percentages and will be sampled
+        technique (str): type of sampling
+        factor (int): factor for scaling sample size
+    return:
+        None: if keyword string doesn't match any
+        x_sampled & y_sampled according to chosen technique
+    '''
+
+    count = Counter(y)  # for counting samples number of each class
+
+    # over sampling technique using SMOTE
+    if technique == 'oversampling':
+        ros = SMOTE(sampling_strategy={0: count[1] // factor}, k_neighbors=5, random_state=config.RANDOM_STATE)
+        x_os, y_os = ros.fit_resample(X, y)
+        return x_os, y_os
+
+    # under sampling technique using RandomUnderSampler
+    elif technique == 'undersampling':
+        rus = RandomUnderSampler(sampling_strategy={1: factor * count[0]}, random_state=config.RANDOM_STATE)
+        x_us, y_us = rus.fit_resample(X,y)
+        return x_us, y_us
+
+    # both under and over sampling techniques using SMOTE & RandomUnderSampler
+    elif technique == 'over-under-sampling':
+        oversample = SMOTE(sampling_strategy={0: count[1] // factor}, k_neighbors=5, random_state=config.RANDOM_STATE)
+        undersample = RandomUnderSampler(sampling_strategy={1: count[0] * factor}, random_state=config.RANDOM_STATE)
+        pipeline = imb_pipeline(steps=[('oversampling', oversample),
+                                   ('undersampling', undersample)])
+        x_ous, y_ous = pipeline.fit_resample(X, y)
+        return x_ous, y_ous
+
+    return None     # None if nothing
