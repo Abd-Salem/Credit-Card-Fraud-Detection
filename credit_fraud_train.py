@@ -1,46 +1,52 @@
 from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import  Pipeline
+from imblearn.pipeline import Pipeline as imb_pipline
 import config
-from credit_fraud_utils_data import prepare_data, load_data
+from credit_fraud_utils_data import prepare_data, load_data, sample_data
 from credit_fraud_utils_eval import model_eval_report, pr_curve_avg_precision_score
+from collections import Counter
 from tabulate import tabulate
 
-def baseline_model():
+def logistic_regression_model(sample_technique:str ='', weighted:bool =False):
     '''
-    - Train our dataset using logistic regression algorithm (baseline model)
-    - No techniques are used for Imbalanced data
+    Train Logistic Regression Model
+    Parameter:
+        sample_technique (str): oversampling - undersampling - both - none
+        weighted (bool): cost sensitive training
     '''
 
     # load train-val dataset
-    train_df = load_data(config.DATASET['train_path'])
-    val_df = load_data(config.DATASET['val_path'])
+    x_train, t_train = load_data(config.DATASET['train_path'])
+    x_val, t_val = load_data(config.DATASET['val_path'])
 
     # Applying preparing steps(feature extraction, feature transformation) on train-val dataset
-    col_trans = prepare_data(train_df, inplace=True,
-                                       numeric_features=config.DATASET['numeric_features'],
-                                       log_trans_cols=config.DATASET['log_cols'])
-    prepare_data(val_df, inplace=True,
-                 numeric_features=config.DATASET['numeric_features'],
-                 log_trans_cols=config.DATASET['log_cols'])
+    col_trans = prepare_data(x_train, inplace=True)
+    x_val, _ = prepare_data(x_val, inplace=False)
 
-    # get our final results after preparing data (input columns names)
-    input_cols_names = train_df.columns.tolist()
-    input_cols_names.remove(config.DATASET['target_feature'])
+    # check for weighted classes for training
+    weight = 1
+    if weighted:
+        count = Counter(t_train[config.DATASET['target_feature']])
+        weight = count[1] / count[0]
 
-    # pipeline data preparing with modeling
-    pipeline = Pipeline([
+    # sampling technique
+    technique = sample_data(y=t_train, technique=sample_technique, factor=1)
+
+    # pipelining feature engineering, sampling and model training
+    pipeline = imb_pipline([
         ('data_preprocessing', col_trans),
-        ('model', LogisticRegression(solver="lbfgs", max_iter=1000, random_state=config.RANDOM_STATE))
+        ('sampling', technique),
+        ('model', LogisticRegression(solver="lbfgs",class_weight={1:1, 0:weight},
+                                     max_iter=1000, random_state=config.RANDOM_STATE))
     ])
 
     # train model
-    model = pipeline.fit(train_df[input_cols_names], train_df[config.DATASET['target_feature']])
+    model = pipeline.fit(x_train, t_train)
 
     # precision recall curve for val dataset
-    avg_pr_score = pr_curve_avg_precision_score(model, val_df[input_cols_names], val_df[config.DATASET['target_feature']])
+    avg_pr_score = pr_curve_avg_precision_score(model, x_val, t_val)
 
     # Metrics' values
-    report = model_eval_report(model, val_df[input_cols_names], val_df[config.DATASET['target_feature']])
+    report = model_eval_report(model, x_val, t_val)
 
     # Printing Vales and statistics in a fancy style using lib tabulate
     data = [
@@ -65,8 +71,7 @@ def baseline_model():
 
 
 if __name__ == '__main__':
-
-    baseline_model()
+    logistic_regression_model()
 #     | Class         | Precision     | Recall     | F1 - score   |
 #     | ------------- | ------------- | ---------- | ------------ |
 #     | 1 (Fraud)     | 0.894         | 0.656      | 0.7564       |
