@@ -6,7 +6,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
-from imblearn.pipeline import Pipeline as imb_pipeline
+from imblearn.combine import SMOTEENN, SMOTETomek
 from collections import Counter
 
 def load_data(path: str):
@@ -124,7 +124,7 @@ def prepare_data(df:pd.DataFrame, * , inplace=False , preprocessing_type='standa
         return df, col_trans
     return col_trans
 
-def sample_data(y, *, technique:str='None', factor:int =1):
+def sample_data(y, *, technique:str='None', sample_strategy='auto'):
     '''
     - Sampling data with different techniques like oversampling, undersampling or both
     parameter:
@@ -136,22 +136,21 @@ def sample_data(y, *, technique:str='None', factor:int =1):
     '''
 
     count = Counter(y)  # for counting samples number of each class
+    sampler = None      # sampler technique
 
     # over sampling technique using SMOTE
     if technique == 'oversampling':
-        return SMOTE(sampling_strategy={1: count[0] // factor}, k_neighbors=5, random_state=config.RANDOM_STATE)
-
+        sampler = SMOTE(sampling_strategy=sample_strategy, k_neighbors=5, random_state=config.RANDOM_STATE)
 
     # under sampling technique using RandomUnderSampler
     elif technique == 'undersampling':
-        return RandomUnderSampler(sampling_strategy={0: factor * count[1]}, random_state=config.RANDOM_STATE)
+        sampler = RandomUnderSampler(sampling_strategy=sample_strategy, random_state=config.RANDOM_STATE)
 
     # both under and over sampling techniques using SMOTE & RandomUnderSampler
-    elif technique == 'over-under-sampling':
-        oversample = SMOTE(sampling_strategy={0: count[1] // factor}, k_neighbors=5, random_state=config.RANDOM_STATE)
-        undersample = RandomUnderSampler(sampling_strategy={1: count[0] * factor}, random_state=config.RANDOM_STATE)
-        pipeline = imb_pipeline(steps=[('oversampling', oversample),
-                                   ('undersampling', undersample)])
-        return pipeline
+    elif technique == 'smoteenn':
+        sampler = SMOTEENN(sampling_strategy=sample_strategy, random_state=config.RANDOM_STATE)
 
-    return None     # None if nothing
+    elif technique == 'smotetomek':
+        sampler = SMOTETomek(sampling_strategy=sample_strategy, random_state=config.RANDOM_STATE)
+
+    return sampler     # None if nothing
