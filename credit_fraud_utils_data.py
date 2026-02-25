@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import config
-from sklearn.preprocessing import StandardScaler, FunctionTransformer
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, FunctionTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from imblearn.over_sampling import SMOTE
@@ -10,9 +10,11 @@ from imblearn.pipeline import Pipeline as imb_pipeline
 from collections import Counter
 
 def load_data(path: str):
-    '''Load dataset'''
+    '''Load dataset and split to X, y'''
     df = pd.read_csv(path)
-    return df
+    X = df.drop(config.DATASET['target_feature'], axis=1)
+    y = df[config.DATASET['target_feature']]
+    return X, y
 
 
 def feature_construction(df:pd.DataFrame, * ,inplace:bool =False):
@@ -28,7 +30,11 @@ def feature_construction(df:pd.DataFrame, * ,inplace:bool =False):
      extracted_features_names: columns names
     '''
 
-    if not inplace:         # check inplace bool type
+    # raise error if inplace isn't bool
+    if not isinstance(inplace, bool):
+        raise TypeError('Inplace isn\'t boolean')
+
+    if inplace is False:         # check inplace bool type
         new_df = df.copy(deep=True)
         df = new_df         # original dataframe will not change
 
@@ -45,43 +51,47 @@ def feature_construction(df:pd.DataFrame, * ,inplace:bool =False):
     # High amount feature
     df['high_amount'] = (df['Amount'] > 2000).astype(float)
 
-    # columns names
+    # add extracted features to configuration
     extracted_numeric_features = ['hour', 'minute', 'second']
 
-    if not inplace:         # check for different returns
-        return df, extracted_numeric_features       # change in new dataframe
-    return extracted_numeric_features           # change in the original dataframe
+
+    if inplace is False:         # check for different returns
+        return df           # new dataframe
+    else:
+        if config.DATASET['prepared_once'] is False:        # if numeric features and input features is updated once don't do this again
+            config.DATASET['numeric_features'].extend(extracted_numeric_features)
+            config.DATASET['input_features'] = df.columns.tolist()
+        return None             # change in the original dataframe
 
 
-def feature_transformation(*, numeric_features:list =None, categorical_features:list =None, log_trans_cols:list =None):
+def feature_transformation(preprocessing_type='standard'):
     '''
     Column transformation methods:
         1- log transformation for skewed data ('Amount', 'V8', 'V28')
         2- standard scaling for numeric features
-    parameter:
-        numeric_features (list): numeric column names for numeric transformations
-        categorical_features (list): categoric column names for categorical transformations
-        log_trans_cols (list): columns names for log transformation
     return:
         col_trans (ColumnTransformation): column transformation method for pipelining
     '''
 
+    # check for scaling type
+    scaler = StandardScaler()
+    if preprocessing_type == 'minmax':
+        scaler = MinMaxScaler()
+
     # bridge the gap between numpy functions and sklearn's transformer interface
     log_trans = Pipeline([
         ('log_trans', FunctionTransformer(np.log1p)),
-        ('scaler', StandardScaler())
+        ('scaler', scaler)
     ])
-
     # column transformation steps
     col_trans = ColumnTransformer([
-        ('log_trans', log_trans, log_trans_cols),
-        ('scaler', StandardScaler(), numeric_features)
+        ('log_trans', log_trans, config.DATASET['log_cols']),
+        ('scaler', scaler, config.DATASET['numeric_features'])
     ], remainder='passthrough')
     return col_trans
 
 
-def prepare_data(df:pd.DataFrame, * , inplace=False ,numeric_features:list =None,
-                 categorical_features:list =None, log_trans_cols:list =None):
+def prepare_data(df:pd.DataFrame, * , inplace=False , preprocessing_type='standard'):
     '''
     Data preparing before modeling:
         1- feature construction (extraction)
@@ -97,27 +107,27 @@ def prepare_data(df:pd.DataFrame, * , inplace=False ,numeric_features:list =None
         col_trans (ColumnTransformer): column transformation method for pipelining
     '''
 
-    # feature extraction step
-    if not inplace:
-        df, extracted_numeric_features = feature_construction(df=df, inplace=inplace)
-    else:
-        extracted_numeric_features = feature_construction(df=df, inplace=inplace)
+    # raise error if inplace isn't bool
+    if not isinstance(inplace, bool):
+        raise TypeError('Inplace isn\'t boolean')
 
-    numeric_features.extend(extracted_numeric_features)     # adding new numeric features
-    col_trans = feature_transformation(numeric_features=numeric_features,
-                                       log_trans_cols=log_trans_cols)    # column transformation step
+    # feature extraction step
+    if inplace is False:
+        df = feature_construction(df=df, inplace=inplace)
+    else:
+        feature_construction(df=df, inplace=inplace)
+
+    col_trans = feature_transformation(preprocessing_type=preprocessing_type)    # column transformation step
 
     # return depends on inplace bool type
-    if not inplace:
+    if inplace is False:
         return df, col_trans
     return col_trans
 
-def sample_data(X, y, *, technique:str='None', factor:int =1):
+def sample_data(y, *, technique:str='None', factor:int =1):
     '''
     - Sampling data with different techniques like oversampling, undersampling or both
     parameter:
-        X: features that will be sampled
-        y: target feature that contain classes' percentages and will be sampled
         technique (str): type of sampling
         factor (int): factor for scaling sample size
     return:
@@ -129,15 +139,12 @@ def sample_data(X, y, *, technique:str='None', factor:int =1):
 
     # over sampling technique using SMOTE
     if technique == 'oversampling':
-        ros = SMOTE(sampling_strategy={0: count[1] // factor}, k_neighbors=5, random_state=config.RANDOM_STATE)
-        x_os, y_os = ros.fit_resample(X, y)
-        return x_os, y_os
+        return SMOTE(sampling_strategy={1: count[0] // factor}, k_neighbors=5, random_state=config.RANDOM_STATE)
+
 
     # under sampling technique using RandomUnderSampler
     elif technique == 'undersampling':
-        rus = RandomUnderSampler(sampling_strategy={1: factor * count[0]}, random_state=config.RANDOM_STATE)
-        x_us, y_us = rus.fit_resample(X,y)
-        return x_us, y_us
+        return RandomUnderSampler(sampling_strategy={0: factor * count[1]}, random_state=config.RANDOM_STATE)
 
     # both under and over sampling techniques using SMOTE & RandomUnderSampler
     elif technique == 'over-under-sampling':
@@ -145,7 +152,6 @@ def sample_data(X, y, *, technique:str='None', factor:int =1):
         undersample = RandomUnderSampler(sampling_strategy={1: count[0] * factor}, random_state=config.RANDOM_STATE)
         pipeline = imb_pipeline(steps=[('oversampling', oversample),
                                    ('undersampling', undersample)])
-        x_ous, y_ous = pipeline.fit_resample(X, y)
-        return x_ous, y_ous
+        return pipeline
 
     return None     # None if nothing
