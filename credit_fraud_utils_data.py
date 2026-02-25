@@ -64,11 +64,13 @@ def feature_construction(df:pd.DataFrame, * ,inplace:bool =False):
         return None             # change in the original dataframe
 
 
-def feature_transformation(preprocessing_type='standard'):
+def feature_transformation(preprocessing_type:str ='standard'):
     '''
     Column transformation methods:
         1- log transformation for skewed data ('Amount', 'V8', 'V28')
         2- standard scaling for numeric features
+    parameter:
+        preprocessing_type (str): standard or minmax
     return:
         col_trans (ColumnTransformation): column transformation method for pipelining
     '''
@@ -91,19 +93,16 @@ def feature_transformation(preprocessing_type='standard'):
     return col_trans
 
 
-def prepare_data(df:pd.DataFrame, * , inplace=False , preprocessing_type='standard'):
+def prepare_data(df:pd.DataFrame, * , inplace:bool =False, preprocessing_type:str ='standard'):
     '''
     Data preparing before modeling:
         1- feature construction (extraction)
         2- feature transformation
     parameter:
         df (DataFrame): dataset
-        numeric_features (list): numeric column names for numeric transformations
-        categorical_features (list): categoric column names for categorical transformations
-        log_trans_cols (list): columns names for log transformation
+        preprocessing_type (str): Standard or minmax
     return:
         df (DataFrame): dataset
-        input_cols_name (list): names of engineered columns which are ready for modeling step
         col_trans (ColumnTransformer): column transformation method for pipelining
     '''
 
@@ -124,15 +123,15 @@ def prepare_data(df:pd.DataFrame, * , inplace=False , preprocessing_type='standa
         return df, col_trans
     return col_trans
 
-def sample_data(y, *, technique:str='None', sample_strategy='auto'):
+def sample_data(y, *, technique:str='None', sample_strategy:str ='auto'):
     '''
     - Sampling data with different techniques like oversampling, undersampling or both
     parameter:
         technique (str): type of sampling
-        factor (int): factor for scaling sample size
+        sample_strategy (str): scaling balance between two classes
     return:
         None: if keyword string doesn't match any
-        x_sampled & y_sampled according to chosen technique
+        sampler: chosen technique
     '''
 
     count = Counter(y)  # for counting samples number of each class
