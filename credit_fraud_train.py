@@ -74,15 +74,3 @@ def logistic_regression_model(sample_technique:str ='', weighted:bool =False):
     print('#' * 85 + '\n')
     print('\t' * 8 +'** Summary Statistics **')
     print(tabulate(data,headers=headers, tablefmt='github'))
-
-if __name__ == '__main__':
-    logistic_regression_model(sample_technique='oversampling')
-#     | Class         | Precision     | Recall     | F1 - score   |
-#     | ------------- | ------------- | ---------- | ------------ |
-#     | 1 (Fraud)     | 0.894         | 0.656      | 0.7564       |
-#     | 0 (Genuine)   | 0.999         | 0.9999     | 0.9997       |
-#     #############################################################################################
-#                                ** Summary Statistics **
-#     |       Model           |  Accuracy    |   Macro Avg   |  Weighted Avg    |   Harmonic Avg   |   AUPRC  |
-#     | --------------------- | ------------ | ------------- | ---------------- | ---------------- |----------|
-#     | Logistic Regression   |     0.999    |      0.878    |      0.999       |       0.861      |   0.76   |
