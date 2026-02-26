@@ -123,16 +123,21 @@ def prepare_data(df:pd.DataFrame, * , inplace:bool =False, preprocessing_type:st
         return df, col_trans
     return col_trans
 
-def sample_data(y, *, technique:str='None', sample_strategy:str ='auto'):
+def sample_data(X, y, *, technique:str='None', sample_strategy ='auto'):
     '''
     - Sampling data with different techniques like oversampling, undersampling or both
     parameter:
-        technique (str): type of sampling
-        sample_strategy (str): scaling balance between two classes
+        X: input features
+        Y: target feature
+        technique: type of sampling (oversampling, undersampling, both)
+        sample_strategy: scaling balance between two classes
     return:
-        None: if keyword string doesn't match any
-        sampler: chosen technique
+        x_resampled, y_resampled
     '''
+
+    if not isinstance(technique, str):
+        raise TypeError('technique must be string:'
+                        '  \'oversampling\', \'undersampling\', \'smoteenn\', \'smotetomek\'')
 
     count = Counter(y)  # for counting samples number of each class
     sampler = None      # sampler technique
@@ -152,4 +157,10 @@ def sample_data(y, *, technique:str='None', sample_strategy:str ='auto'):
     elif technique == 'smotetomek':
         sampler = SMOTETomek(sampling_strategy=sample_strategy, random_state=config.RANDOM_STATE)
 
-    return sampler     # None if nothing
+    else:
+        raise ValueError('not match with these options: '
+                         '\'oversampling\', \'undersampling\', \'smoteenn\', \'smotetomek\'')
+
+    x_resampled, y_resampled = sampler.fit_resample(X, y)
+
+    return x_resampled, y_resampled         # sampled data
