@@ -1,76 +1,91 @@
 from sklearn.linear_model import LogisticRegression
-from imblearn.pipeline import Pipeline as imb_pipline
+from sklearn.model_selection import StratifiedKFold, GridSearchCV
+from imblearn.pipeline import  Pipeline
 import config
 from credit_fraud_utils_data import prepare_data, load_data, sample_data
-from credit_fraud_utils_eval import model_eval_report, pr_curve_avg_precision_score
+from credit_fraud_utils_eval import model_eval_report, pr_curve_fbeta_score
 from collections import Counter
-from tabulate import tabulate
 
-def logistic_regression_model(sample_technique:str ='', weighted:bool =False):
+def logistic_regression_model(sample_technique:str ='oversampling'):
     '''
     Train Logistic Regression Model
     Parameter:
-        sample_technique (str): oversampling - undersampling - both - none
-        weighted (bool): cost sensitive training
+        sample_technique (str): oversampling - undersampling - both
     '''
-
-    # raise error if isn't bool
-    if not isinstance(weighted, bool):
-        raise TypeError('Weighted isn\'t boolean')
 
     # load train-val dataset
     x_train, t_train = load_data(config.DATASET['train_path'])
     x_val, t_val = load_data(config.DATASET['val_path'])
 
-    # Applying preparing steps(feature extraction, feature transformation) on train-val dataset
+    # Applying preparing steps(feature extraction, feature transformation) on train & val dataset
     col_trans = prepare_data(x_train, inplace=True)
-    x_val, _ = prepare_data(x_val, inplace=False)
+    prepare_data(x_val, inplace=True)
 
-    # get classes count
-    count = Counter(t_train)
+    # sampling data
+    x_train_sampled, t_train_sampled = sample_data(X=x_train, y=t_train,
+                                                   technique=sample_technique,
+                                                   sample_strategy='auto')
 
-    # check for weighted classes for training
-    wt = 1
-    if weighted:
-        wt = count[1] / count[0]
-
-    # sampling technique
-    technique = sample_data(y=t_train, technique=sample_technique, sample_strategy='auto')
+    # stratified is a good way to keep distribution as it is in each fold.
+    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=config.RANDOM_STATE)
 
     # pipelining feature engineering, sampling and model training
-    pipeline = imb_pipline([
+    pipeline = Pipeline([
         ('data_preprocessing', col_trans),
-        ('sampling', technique),
-        ('model', LogisticRegression(solver="lbfgs",class_weight={1:1, 0:wt},
-                                     max_iter=1000, random_state=config.RANDOM_STATE))
+        ('model', LogisticRegression(random_state=config.RANDOM_STATE))
     ])
 
-    # train model
-    model = pipeline.fit(x_train, t_train)
+    # Classes counts
+    count = Counter(t_train)
+    class_ratio = count[1] / count[0]
 
-    # precision recall curve for val dataset
-    avg_pr_score = pr_curve_avg_precision_score(model, x_val, t_val)
+    # grid parameters
+    param_grid = {
+        'model__solver' : ['lbfgs', 'newton-cg'],
+        'model__class_weight' : [{1 : wt} for wt in [class_ratio, 0.05, 0.1, 0.5, 1]],
+        'model__max_iter': [100, 500, 1000]
+    }
 
-    # Metrics' values
-    report = model_eval_report(model, x_val, t_val)
+    # apply grid search with different parameters and get the best estimator
+    grid = GridSearchCV(pipeline,param_grid=param_grid,
+                        scoring='average_precision', cv=skf)
+    grid.fit(x_train_sampled, t_train_sampled)
+    best_params = grid.best_params_             # best parameters
+    print("Best Hyperparameters:", best_params)
 
-    # Printing Vales and statistics in a fancy style using lib tabulate
-    data = [
-        ['1 (Fraud)', f'{report['1']['precision']:.3f}',f'{report['1']['recall']:.3f}',
-         f'{report['1']['f1-score']:.4f}'],
-        ['0 (Genuine)', f'{report['0']['precision']:.3f}', f'{report['0']['recall']:.4f}',
-         f'{report['0']['f1-score']:.4f}']
-    ]
+    model = grid.best_estimator_                # best model
 
-    headers = ['Class', 'Precision', 'Recall', 'F1-score']      # table headers
-    print(tabulate(data, headers=headers, tablefmt='github'))
+    # avg precision score, best threshold and f-beta scores
+    # get best threshold using f2-score as recall is important in our problem
+    result = pr_curve_fbeta_score(model, x_val, t_val, beta_score=2)
 
-    data = [
-        ['Logistic Regression',
-         f'{report['accuracy']:.3f}',f'{report['macro avg']['f1-score']:.3f}',
-         f'{report['weighted avg']['f1-score']:.3f}', f'{report['harmonic avg']:.3f}', f'{avg_pr_score:.3f}']
-    ]
-    headers = ['Model','Accuracy','Macro Avg', 'Weighted Avg', 'Harmonic Avg', 'AUPRC']     # table headers
-    print('#' * 85 + '\n')
-    print('\t' * 8 +'** Summary Statistics **')
-    print(tabulate(data,headers=headers, tablefmt='github'))
+    # classification report with specific threshold
+    report, harmonic_mean = model_eval_report(model, x_val, t_val, result['best_threshold'])
+
+    # Showing results
+    print(f'AUPRC: {result['auprc']}')
+    print(f'Best Threshold: {result['best_threshold']}')
+    print(f'f2-score for class-1: {result['f-score_1']}')
+    print(f'f2-score for class-0: {result['f-score_0']}')
+    print('==============================================')
+    print('Classification report using best threshold:')
+    print(report)
+    print(f'Harmonic mean of f1-scores: {harmonic_mean}')
+
+    # Best Hyperparameters: {'model__class_weight': {1: 1}, 'model__max_iter': 100, 'model__solver': 'lbfgs'}
+    # AUPRC: 0.74
+    # Best Threshold: 0.999997
+    # f2-score for class-1: 0.79
+    # f2-score for class-0: 0.0
+    # ==============================================
+    # Classification report using best threshold:
+    #               precision    recall  f1-score   support
+    #
+    #            0     0.9996    0.9998    0.9997     56870
+    #            1     0.8537    0.7778    0.8140        90
+    #
+    #     accuracy                         0.9994     56960
+    #    macro avg     0.9267    0.8888    0.9068     56960
+    # weighted avg     0.9994    0.9994    0.9994     56960
+    #
+    # Harmonic mean of f1-scores: 0.897

@@ -131,6 +131,8 @@ def sample_data(X, y, technique, *, kn=5, nn=3 ,sample_strategy ='auto'):
         y: target feature
         technique: type of sampling: over-sampling, under-sampling, both
         sample_strategy: scaling balance between two classes
+        kn: k_neighbors for smote
+        nn: n_neighbors for ENN
     return:
         sampled data
     '''
