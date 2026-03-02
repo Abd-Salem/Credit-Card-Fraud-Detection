@@ -21,11 +21,11 @@ def model_eval_report(model, X, y_true, threshold=0.5):
     y_pred = (model.predict_proba(X)[:, 1] >= threshold).astype(int)   # get predictions with specific threshold
 
     # calculate harmonic mean of f1-scores of both classes (sense small values which show weak classification angles of the model)
-    report_dict = classification_report(y_true, y_pred, output_dict=True, digits=3)    # get results in dict
+    report_dict = classification_report(y_true, y_pred, output_dict=True)    # get results in dict
     harmonic_mean = hmean([report_dict['1']['f1-score'], report_dict['0']['f1-score']])
 
     # get report
-    report = classification_report(y_true, y_pred, output_dict=False)
+    report = classification_report(y_true, y_pred, output_dict=False, digits=4)
 
     return report, harmonic_mean     # return harmonic mean & report
 

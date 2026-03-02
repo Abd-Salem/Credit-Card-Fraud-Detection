@@ -5,9 +5,8 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, FunctionTransfor
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from imblearn.over_sampling import SMOTE
-from imblearn.under_sampling import RandomUnderSampler
+from imblearn.under_sampling import RandomUnderSampler, EditedNearestNeighbours
 from imblearn.combine import SMOTEENN, SMOTETomek
-from collections import Counter
 
 def load_data(path: str):
     '''Load dataset and split to X, y'''
@@ -57,11 +56,11 @@ def feature_construction(df:pd.DataFrame, * ,inplace:bool =False):
 
     if inplace is False:         # check for different returns
         return df           # new dataframe
-    else:
-        if config.DATASET['prepared_once'] is False:        # if numeric features and input features is updated once don't do this again
-            config.DATASET['numeric_features'].extend(extracted_numeric_features)
-            config.DATASET['input_features'] = df.columns.tolist()
-        return None             # change in the original dataframe
+
+    if config.DATASET['prepared_once'] is False:        # if numeric features and input features is updated once don't do this again
+        config.DATASET['numeric_features'].extend(extracted_numeric_features)
+        config.DATASET['input_features'] = df.columns.tolist()
+    return None             # change in the original dataframe
 
 
 def feature_transformation(preprocessing_type:str ='standard'):
@@ -123,44 +122,48 @@ def prepare_data(df:pd.DataFrame, * , inplace:bool =False, preprocessing_type:st
         return df, col_trans
     return col_trans
 
-def sample_data(X, y, *, technique:str='None', sample_strategy ='auto'):
+
+def sample_data(X, y, technique, *, kn=5, nn=3 ,sample_strategy ='auto'):
     '''
-    - Sampling data with different techniques like oversampling, undersampling or both
+    - Sampling data with different techniques: oversampling, undersampling or both
     parameter:
         X: input features
-        Y: target feature
-        technique: type of sampling (oversampling, undersampling, both)
+        y: target feature
+        technique: type of sampling: over-sampling, under-sampling, both
         sample_strategy: scaling balance between two classes
     return:
-        x_resampled, y_resampled
+        sampled data
     '''
 
     if not isinstance(technique, str):
-        raise TypeError('technique must be string:'
-                        '  \'oversampling\', \'undersampling\', \'smoteenn\', \'smotetomek\'')
+        raise TypeError('''
+        Technique value must be str type: 'rus', 'enn', 'smote', 'smoteenn', 'smotetomek'
+                        ''')
+    sampler = None      # initial value
 
-    count = Counter(y)  # for counting samples number of each class
-    sampler = None      # sampler technique
-
-    # over sampling technique using SMOTE
-    if technique == 'oversampling':
-        sampler = SMOTE(sampling_strategy=sample_strategy, k_neighbors=5, random_state=config.RANDOM_STATE)
-
-    # under sampling technique using RandomUnderSampler
-    elif technique == 'undersampling':
+    # oversampling technique using SMOTE
+    if technique == 'rus':
         sampler = RandomUnderSampler(sampling_strategy=sample_strategy, random_state=config.RANDOM_STATE)
 
-    # both under and over sampling techniques using SMOTE & RandomUnderSampler
+    elif technique == 'enn':
+        sampler = EditedNearestNeighbours(sampling_strategy=sample_strategy, n_neighbors=nn)
+
+    # undersampling technique using RandomUnderSampler
+    elif technique == 'smote':
+        sampler = SMOTE(sampling_strategy=sample_strategy, k_neighbors=kn, random_state=config.RANDOM_STATE)
+
+    # both undersampling & oversampling techniques using SMOTETomek or SMOTEEN
     elif technique == 'smoteenn':
-        sampler = SMOTEENN(sampling_strategy=sample_strategy, random_state=config.RANDOM_STATE)
+        sampler = SMOTEENN(sampling_strategy=sample_strategy, random_state=config.RANDOM_STATE,
+                           smote=SMOTE(k_neighbors=kn), enn=EditedNearestNeighbours(n_neighbors=nn))
 
     elif technique == 'smotetomek':
-        sampler = SMOTETomek(sampling_strategy=sample_strategy, random_state=config.RANDOM_STATE)
+        sampler = SMOTETomek(sampling_strategy=sample_strategy, random_state=config.RANDOM_STATE,
+                             smote=SMOTE(k_neighbors=kn))
 
     else:
-        raise ValueError('not match with these options: '
-                         '\'oversampling\', \'undersampling\', \'smoteenn\', \'smotetomek\'')
+        raise ValueError('''
+        No match with these options: 'rus', 'enn', 'smote', 'smoteenn', 'smotetomek'
+        ''')
 
-    x_resampled, y_resampled = sampler.fit_resample(X, y)
-
-    return x_resampled, y_resampled         # sampled data
+    return sampler.fit_resample(X, y)
