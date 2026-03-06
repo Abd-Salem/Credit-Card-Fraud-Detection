@@ -1,0 +1,75 @@
+random_state: 34
+###################################################################
+dataset:
+  unprocessed:
+    train: 'split/train.csv'
+    val: 'split/val.csv'
+    train_val: 'split/trainval.csv'
+    test: 'split/test.csv'
+
+  prepared:
+    dir: 'processed_data/prepared'
+    train: 'processed_data/prepared/train.npz'
+    train_metadata: 'processed_data/prepared/train_metadata.json'
+    val: 'processed_data/prepared/val.npz'
+    val_metadata: 'processed_data/prepared/val_metadata.json'
+    train_val:  'processed_data/prepared/train+val.npz'
+    train_val_metadata: 'processed_data/prepared/train+val_metadata.json'
+    test:  'processed_data/prepared/test.npz'
+    test_metadata: 'processed_data/prepared/test_metadata.json'
+
+  sampled:
+    dir: 'processed_data/sampled'
+    train: 'processed_data/sampled/train'
+    train_metadata: 'processed_data/sampled/train_metadata'
+    train_val: 'processed_data/sampled/train+val'
+    train_val_metadata: 'processed_data/sampled/train+val_metadata'
+
+###################################################################
+preprocessing:
+  scaler: 'standard'
+
+###################################################################
+features:
+  target: 'Class'
+  log_trans: ['Amount']
+  numeric: ['Time', 'V1', 'V2', 'V3', 'V4', 'V5',
+                    'V6', 'V7', 'V8', 'V9', 'V10', 'V11',
+                    'V12', 'V13', 'V14', 'V15', 'V16',
+                    'V17', 'V18', 'V19', 'V20', 'V21',
+                    'V22', 'V23', 'V24', 'V25', 'V26',
+                    'V27', 'V28']
+
+###################################################################
+sampling:
+  techniques:
+    - 'rus'
+    - 'enn'
+    - 'smote'
+    - 'smoteenn'
+    - 'smotetomek'
+  params:
+    sampling_strategy: 'auto'
+    smote_kn: 5
+    enn_nn: 3
+
+###################################################################
+models:
+  logistic_regression:
+    solver: ['lbfgs', 'newton-cg']
+    class_weight: [0.1, 0.5, 1]
+    max_iter: [500, 800, 1000]
+
+  random_forest:
+    max_depth: [5, 10, 20]
+    n_estimators: [100, 250, 500]
+    min_samples_leaf: [2, 5]
+    class_weight: [1]
+
+###################################################################
+evaluation:
+  scoring: 'average_precision'
+  beta: 2
+  cv_folds: 5
+
+###################################################################
