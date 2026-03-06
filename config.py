@@ -1,18 +1,28 @@
-RANDOM_STATE = 34       #random state
+import yaml
+import os
 
-# dataset parameters (paths, features)
-DATASET = {
-    'train_path': 'split/train.csv',
-    'val_path': 'split/val.csv',
-    'train_val_path': 'split/trainval.csv',
-    'test_path': 'split/test.csv',
-    'target_feature': 'Class',
-    'log_cols': ['Amount'],
-    'numeric_features': ['Time', 'V1', 'V2', 'V3', 'V4', 'V5',
-                    'V6', 'V7', 'V8', 'V9', 'V10', 'V11',
-                    'V12', 'V13', 'V14', 'V15', 'V16',
-                    'V17', 'V18', 'V19', 'V20', 'V21',
-                    'V22', 'V23', 'V24', 'V25', 'V26',
-                    'V27', 'V28'],
-    'prepared_once': False
-}
+class Config:
+    def __init__(self, path='configurations.yaml'):
+        with open(path, 'r') as f:
+            data = yaml.safe_load(f)
+
+        self.RANDOM_STATE = data['random_state']
+        self.DATASET = data['dataset']
+        self.PREPROCESSING = data['preprocessing']
+        self.FEATURES = data['features']
+        self.SAMPLING = data['sampling']
+        self.MODELS = data['models']
+        self.EVALUATION = data['evaluation']
+
+        self._create_dirs()
+
+    # create dir for processed data
+    def _create_dirs(self):
+        dirs = [
+            self.DATASET['prepared']['dir'],
+            self.DATASET['sampled']['dir'],
+        ]
+        for d in dirs:
+            os.makedirs(d, exist_ok=True)
+
+config = Config()   # create config
