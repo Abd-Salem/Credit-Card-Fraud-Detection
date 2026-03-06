@@ -25,4 +25,8 @@ class Config:
         for d in dirs:
             os.makedirs(d, exist_ok=True)
 
+    def __repr__(self):
+        return (f"Config(random_state={self.RANDOM_STATE}, "
+                f"dataset_keys={list(self.DATASET.keys())})")
+
 config = Config()   # create config

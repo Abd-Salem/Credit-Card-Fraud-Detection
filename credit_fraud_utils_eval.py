@@ -30,7 +30,7 @@ def model_eval_report(model, X, y_true, threshold=0.5):
     return report, harmonic_mean     # return harmonic mean & report
 
 
-def pr_curve_fbeta_score(model, X, y_true, beta_score=1):
+def avg_pr_fb_score(model, X, y_true, beta_score=1, show_plot=False):
     '''
     Plotting precision recall curve that show precision recall values with different thresholds
     and calculate best threshold and average precision
@@ -39,41 +39,42 @@ def pr_curve_fbeta_score(model, X, y_true, beta_score=1):
         X: input features for prediction
         y_true: ground truth
         beta_score: indicates f-score(f1, f0.5, f2)
+        show_plot(bool): show plot or not
     return:
-        result as a dict type (auprc, best_threshold(respect-to-class-1), f-beta scores of both classes)
+        result (dict): auprc, best_threshold(respect-to-class-1), f-beta scores of both classes
     '''
-    y_proba_1 = model.predict_proba(X)[:, 1]      # get predicted probabilities
-    precisions, recalls, thresholds = precision_recall_curve(y_true, y_proba_1)      # precisions, recalls & thresholds
-
-    # plot precision recall curve
-    # precision, recall = precisions[:-1], recalls[:-1]     # exclude last value
-    # plt.plot(thresholds, precision, linestyle = '--', color='blue', label='Precision')       # threshold vs precision
-    # plt.plot(thresholds, recall, linestyle='--', color='red', label='Recall')            # threshold vs recall
-    # plt.title('Threshold VS Precision Recall', fontweight=12, fontstyle='italic', color='grey')
-    # plt.xlabel('Threshold', color='green')
-    # plt.ylabel('Precision-Recall', color='green')
-    # plt.legend(loc='best')
-    # plt.show()
-
-    # get average precision score
-    auprc = average_precision_score(y_true, y_proba_1)
+    y_proba = model.predict_proba(X)[:, 1]      # get predicted probabilities
+    precisions, recalls, thresholds = precision_recall_curve(y_true, y_proba)      # precisions, recalls & thresholds
 
     # get our best_threshold(respect to class 1) and f-beta score for class 1
-    scores = [fbeta_score(y_true, y_proba_1 >= th, beta=beta_score) for th in thresholds]     # list of f-scores with different thresholds
-    best_idx = np.argmax(scores)                # return index of highest f-score
-    score_1 = scores[best_idx]                  # get highest f-score for class 1
+    fscores = [fbeta_score(y_true, y_proba >= th, beta=beta_score, pos_label=1) for th in thresholds]     # list of f-scores with different thresholds
+    best_idx = np.argmax(fscores)                # return index of highest f-score
     best_threshold = thresholds[best_idx]       # get corresponding threshold of highest f-score
 
-    # let's calculate f-score for class-0 using best_threshold(class-1)
-    y_proba_0 = model.predict_proba(X)[:, 0]
-    score_0 = fbeta_score(y_true, y_proba_0 >= best_threshold, beta=beta_score)
+    # let's calculate f-scores for both classes with respect to best threshold
+    score_1 = fscores[best_idx]          # class 1
+    score_0 = fbeta_score(y_true, y_proba >= best_threshold, beta=beta_score, pos_label=0)      # class 0
+    auprc = average_precision_score(y_true, y_proba)        # avg precision score
 
-    # dict for auprc score, best_threshold and f-beta scores of both classes(according to best_threshold)
+    # results in dict
     result = {
         'auprc': auprc,
         'best_threshold': best_threshold,
-        'f-score_0': score_0,
-        'f-score_1': score_1,
+        'fscore_0': score_0,
+        'fscore_1': score_1,
     }
+
+
+    if show_plot:
+        # plot precision recall curve
+        precision, recall = precisions[:-1], recalls[:-1]     # exclude last value
+        plt.plot(thresholds, precision, linestyle = '--', color='blue', label='Precision')       # threshold vs precision
+        plt.plot(thresholds, recall, linestyle='--', color='red', label='Recall')            # threshold vs recall
+        plt.axvline(best_threshold, color='green', linestyle='-', label=f'Best threshold: {best_threshold:.3f}')
+        plt.title('Threshold VS Precision Recall', fontweight=12, fontstyle='italic', color='grey')
+        plt.xlabel('Threshold', color='green')
+        plt.ylabel('Precision-Recall', color='green')
+        plt.legend(loc='best')
+        plt.show()
 
     return result
