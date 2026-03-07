@@ -55,16 +55,39 @@ sampling:
 
 ###################################################################
 models:
+  dir: 'models'
+
   logistic_regression:
-    solver: ['lbfgs', 'newton-cg']
-    class_weight: [0.1, 0.5, 1]
-    max_iter: [500, 800, 1000]
+    dir: 'models/lr'
+    model: 'models/lr/lr_model.pkl'
+    metadata: 'models/lr/lr_model.json'
+    params:
+      solver: ['lbfgs', 'newton-cg', 'liblinear']
+      max_iter: [5000, 8000]
+      class_weight: [0.2, 0.5, 0.8, 1]
+
 
   random_forest:
-    max_depth: [5, 10, 20]
-    n_estimators: [100, 250, 500]
-    min_samples_leaf: [2, 5]
-    class_weight: [1]
+    dir: 'models/rf'
+    model: 'models/rf/rf_model.pkl'
+    metadata: 'models/rf/rf_model.json'
+    n_iter: 20
+    params:
+      max_depth: [15, 20, 25]
+      max_features: ['sqrt']
+      n_estimators: [300, 400, 600]
+      min_samples_leaf: [2, 5]
+      class_weight: [0.5, 0.8, 1]
+
+  voting_classifier:
+    dir: 'models/voting'
+    model: 'models/voting/vc_model.pkl'
+    metadata: 'models/voting/vc_model.json'
+    params:
+      voting: 'soft'
+      estimators: ['lr','rf']
+      weights: [1, 1.5, 2]
+
 
 ###################################################################
 evaluation:

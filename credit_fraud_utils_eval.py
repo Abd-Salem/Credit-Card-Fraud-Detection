@@ -22,15 +22,15 @@ def model_eval_report(model, X, y_true, threshold=0.5):
 
     # calculate harmonic mean of f1-scores of both classes (sense small values which show weak classification angles of the model)
     report_dict = classification_report(y_true, y_pred, output_dict=True)    # get results in dict
-    harmonic_mean = hmean([report_dict['1']['f1-score'], report_dict['0']['f1-score']])
+    report_dict['hmean'] = hmean([report_dict['1']['f1-score'], report_dict['0']['f1-score']])
 
     # get report
-    report = classification_report(y_true, y_pred, output_dict=False, digits=4)
+    # report = classification_report(y_true, y_pred, output_dict=False, digits=4)
 
-    return report, harmonic_mean     # return harmonic mean & report
+    return report_dict     # return harmonic mean & report
 
 
-def avg_pr_fb_score(model, X, y_true, beta_score=1, show_plot=False):
+def avg_pr_fb_score(model, X, y_true, beta=1, show_plot=False):
     '''
     Plotting precision recall curve that show precision recall values with different thresholds
     and calculate best threshold and average precision
@@ -47,21 +47,21 @@ def avg_pr_fb_score(model, X, y_true, beta_score=1, show_plot=False):
     precisions, recalls, thresholds = precision_recall_curve(y_true, y_proba)      # precisions, recalls & thresholds
 
     # get our best_threshold(respect to class 1) and f-beta score for class 1
-    fscores = [fbeta_score(y_true, y_proba >= th, beta=beta_score, pos_label=1) for th in thresholds]     # list of f-scores with different thresholds
+    fscores = [fbeta_score(y_true, y_proba >= th, beta=beta, pos_label=1) for th in thresholds]     # list of f-scores with different thresholds
     best_idx = np.argmax(fscores)                # return index of highest f-score
     best_threshold = thresholds[best_idx]       # get corresponding threshold of highest f-score
 
     # let's calculate f-scores for both classes with respect to best threshold
     score_1 = fscores[best_idx]          # class 1
-    score_0 = fbeta_score(y_true, y_proba >= best_threshold, beta=beta_score, pos_label=0)      # class 0
+    score_0 = fbeta_score(y_true, y_proba >= best_threshold, beta=beta, pos_label=0)      # class 0
     auprc = average_precision_score(y_true, y_proba)        # avg precision score
 
     # results in dict
     result = {
-        'auprc': auprc,
-        'best_threshold': best_threshold,
-        'fscore_0': score_0,
-        'fscore_1': score_1,
+        'AUPRC': auprc,
+        f'best_threshold(f{beta}-score)': best_threshold,
+        f'f{beta}-score class_0': score_0,
+        f'f{beta}score class_1': score_1,
     }
 
 
