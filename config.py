@@ -21,6 +21,10 @@ class Config:
         dirs = [
             self.DATASET['prepared']['dir'],
             self.DATASET['sampled']['dir'],
+            self.MODELS['dir'],
+            self.MODELS['logistic_regression']['dir'],
+            self.MODELS['random_forest']['dir'],
+            self.MODELS['voting_classifier']['dir']
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
