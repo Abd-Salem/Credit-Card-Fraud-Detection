@@ -6,7 +6,7 @@
         "model__max_iter": 100,
         "model__solver": "lbfgs"
     },
-    "f2-score_results": {
+    "results": {
         "AUPRC": 0.7376453290234841,
         "best_threshold(f2-score)": 0.9999961753335185,
         "f2-score class_0": 0.9997608648253258,

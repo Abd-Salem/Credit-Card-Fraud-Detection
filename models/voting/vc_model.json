@@ -1,5 +1,5 @@
 {
-    "f2-score_results": {
+    "results": {
         "AUPRC": 0.8474265745978564,
         "best_threshold(f2-score)": 0.17445640547403726,
         "f2-score class_0": 0.999753824512045,
