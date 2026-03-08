@@ -1,0 +1,43 @@
+{
+    "model_params": {
+        "model__class_weight": {
+            "1": 1
+        },
+        "model__max_iter": 100,
+        "model__solver": "lbfgs"
+    },
+    "f2-score_results": {
+        "AUPRC": 0.7376453290234841,
+        "best_threshold(f2-score)": 0.9999961753335185,
+        "f2-score class_0": 0.9997608648253258,
+        "f2score class_1": 0.7918552036199095
+    },
+    "classification_report(threshold=0.9999961753335185)": {
+        "0": {
+            "precision": 0.9996483701958578,
+            "recall": 0.9997889924388957,
+            "f1-score": 0.9997186763723318,
+            "support": 56870.0
+        },
+        "1": {
+            "precision": 0.8536585365853658,
+            "recall": 0.7777777777777778,
+            "f1-score": 0.813953488372093,
+            "support": 90.0
+        },
+        "accuracy": 0.999438202247191,
+        "macro avg": {
+            "precision": 0.9266534533906119,
+            "recall": 0.8887833851083368,
+            "f1-score": 0.9068360823722124,
+            "support": 56960.0
+        },
+        "weighted avg": {
+            "precision": 0.9994176980570773,
+            "recall": 0.999438202247191,
+            "f1-score": 0.999425156939045,
+            "support": 56960.0
+        },
+        "hmean": 0.8973225920778882
+    }
+}
