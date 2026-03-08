@@ -38,7 +38,7 @@ features:
                     'V12', 'V13', 'V14', 'V15', 'V16',
                     'V17', 'V18', 'V19', 'V20', 'V21',
                     'V22', 'V23', 'V24', 'V25', 'V26',
-                    'V27', 'V28']
+                    'V27', 'V28', 'hour', 'minute','second']
 
 ###################################################################
 sampling:
@@ -63,7 +63,7 @@ models:
     metadata: 'models/lr/lr_model.json'
     params:
       solver: ['lbfgs', 'newton-cg', 'liblinear']
-      max_iter: [5000, 8000]
+      max_iter: [100, 500, 800, 1000, 2000]
       class_weight: [0.2, 0.5, 0.8, 1]
 
 
@@ -71,7 +71,7 @@ models:
     dir: 'models/rf'
     model: 'models/rf/rf_model.pkl'
     metadata: 'models/rf/rf_model.json'
-    n_iter: 20
+    n_iter: 25
     params:
       max_depth: [15, 20, 25]
       max_features: ['sqrt']
@@ -86,7 +86,7 @@ models:
     params:
       voting: 'soft'
       estimators: ['lr','rf']
-      weights: [1, 1.5, 2]
+      weights: [1.5, 2]
 
 
 ###################################################################

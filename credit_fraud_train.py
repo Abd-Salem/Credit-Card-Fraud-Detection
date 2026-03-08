@@ -1,3 +1,4 @@
+import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.model_selection import StratifiedKFold, GridSearchCV, RandomizedSearchCV
@@ -46,24 +47,24 @@ def logistic_regression_model(sample_technique:(str | None) = None):
     grid.fit(x_train, t_train)                  # fit model
     model = grid.best_estimator_                # best model
 
+    # save model
+    joblib.dump(model, config.MODELS['logistic_regression']['model'])
+
     # evaluate using avg precision score and f-beta metrics and show plot with best threshold
     result = avg_pr_fb_score(model, x_val, t_val, beta=config.EVALUATION['beta'], show_plot=False)
 
     # classification report using best threshold given from evaluation
-    report = model_eval_report(model, x_val, t_val, result['best_threshold'])
+    report = model_eval_report(model, x_val, t_val, result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
 
     metadata = {
         'model_params': grid.best_params_,
         f'f{config.EVALUATION['beta']}-score_results' : result,
-        f'classification_report(threshold={result['best_threshold']})': report
+        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report
     }
-
-    # save model
-    joblib.dump(model, config.MODELS['logistic_regression']['model'])
 
     # save model metadata
     with open(config.MODELS['logistic_regression']['metadata'], 'w') as f:
-        json.dump(metadata, f, intend=4)
+        json.dump(metadata, f, indent=4)
 
 
 
@@ -100,24 +101,25 @@ def random_forest_model(sample_technique:(str | None) = None):
     rand_grid.fit(x_train, t_train)           # best parameters
     model = rand_grid.best_estimator_                # best model
 
+    # save model
+    joblib.dump(model, config.MODELS['random_forest']['model'])
+
     # evaluate using avg precision score and f-beta metrics and show plot with best threshold
     result = avg_pr_fb_score(model, x_val, t_val, beta=config.EVALUATION['beta'], show_plot=False)
 
     # classification report using best threshold given from evaluation
-    report = model_eval_report(model, x_val, t_val, result['best_threshold'])
+    report = model_eval_report(model, x_val, t_val, result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
 
+
+    # save model metadata
     metadata = {
         'model_params': rand_grid.best_params_,
         f'f{config.EVALUATION['beta']}-score_results' : result,
-        f'classification_report(threshold={result['best_threshold']})': report
+        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report
     }
 
-    # save model
-    joblib.dump(model, config.MODELS['random_forest']['model'])
-
-    # save model metadata
     with open(config.MODELS['random_forest']['metadata'], 'w') as f:
-        json.dump(metadata, f, intend=4)
+        json.dump(metadata, f, indent=4)
 
 
 def voting_classifier(sampling_technique:(str|None)=None):
@@ -127,44 +129,43 @@ def voting_classifier(sampling_technique:(str|None)=None):
     rf_model = joblib.load(config.MODELS['random_forest']['model'])
 
     # prepare estimators
-    names = config.MODELS['voting_classifier']['estimators']
+    names = config.MODELS['voting_classifier']['params']['estimators']
     models = [lr_model, rf_model]
-    estimators = dict(zip(names, models))
+    estimators = list(zip(names, models))
 
     # get prepared data not sampled
-    x_train, t_train = np.load(config.DATASET['prepared']['train'])
-    x_val, t_val = np.load(config.DATASET['prepared']['val'])
+    x_train,x_val, t_train, t_val = get_processed_data(sample_technique=None)
+
 
     # voting classifier
-    voting = VotingClassifier(estimators=estimators, voting=config.MODELS['voting_classifier']['voting'],
-                              weights=config.MODELS['voting_classifier']['weights'])
+    voting = VotingClassifier(estimators=estimators, voting=config.MODELS['voting_classifier']['params']['voting'],
+                              weights=config.MODELS['voting_classifier']['params']['weights'])
 
     # fit model
     voting.fit(x_train, t_train)
+
+    # save model
+    joblib.dump(voting, config.MODELS['voting_classifier']['model'])
 
     # evaluate using avg precision score and f-beta metrics and show plot with best threshold
     result = avg_pr_fb_score(voting, x_val, t_val, beta=config.EVALUATION['beta'], show_plot=False)
 
     # classification report using best threshold given from evaluation
-    report = model_eval_report(voting, x_val, t_val, result['best_threshold'])
-
-    metadata = {
-        f'f{config.EVALUATION['beta']}-score_results' : result,
-        f'classification_report(threshold={result['best_threshold']})': report
-    }
-
-    # save model
-    joblib.dump(voting, config.MODELS['voting_classifier']['model'])
+    report = model_eval_report(voting, x_val, t_val, result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
 
     # save model metadata
+    metadata = {
+        f'f{config.EVALUATION['beta']}-score_results' : result,
+        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report
+    }
     with open(config.MODELS['voting_classifier']['metadata'], 'w') as f:
-        json.dump(metadata, f, intend=4)
+        json.dump(metadata, f, indent=4)
 
 
 
 
 
 if __name__ == '__main__':
-    logistic_regression_model(sample_technique='smoteenn')
-    random_forest_model(sample_technique='smoteenn')
+    # logistic_regression_model(sample_technique='smoteenn')
+    # random_forest_model(sample_technique='smoteenn')
     voting_classifier(sampling_technique='smoteenn')
