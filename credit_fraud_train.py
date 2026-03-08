@@ -58,7 +58,7 @@ def logistic_regression_model(sample_technique:(str | None) = None):
 
     metadata = {
         'model_params': grid.best_params_,
-        f'f{config.EVALUATION['beta']}-score_results' : result,
+        f'results' : result,
         f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report
     }
 
@@ -114,7 +114,7 @@ def random_forest_model(sample_technique:(str | None) = None):
     # save model metadata
     metadata = {
         'model_params': rand_grid.best_params_,
-        f'f{config.EVALUATION['beta']}-score_results' : result,
+        f'results' : result,
         f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report
     }
 
@@ -155,7 +155,7 @@ def voting_classifier(sampling_technique:(str|None)=None):
 
     # save model metadata
     metadata = {
-        f'f{config.EVALUATION['beta']}-score_results' : result,
+        f'results' : result,
         f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report
     }
     with open(config.MODELS['voting_classifier']['metadata'], 'w') as f:
