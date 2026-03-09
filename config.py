@@ -24,7 +24,8 @@ class Config:
             self.MODELS['dir'],
             self.MODELS['logistic_regression']['dir'],
             self.MODELS['random_forest']['dir'],
-            self.MODELS['voting_classifier']['dir']
+            self.MODELS['voting_classifier']['dir'],
+            self.MODELS['neural_network']['dir']
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)

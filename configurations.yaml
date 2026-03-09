@@ -79,14 +79,29 @@ models:
       min_samples_leaf: [2, 5]
       class_weight: [0.5, 0.8, 1]
 
+  neural_network:
+    dir: 'models/nn'
+    model: 'models/nn/nn_model.pkl'
+    metadata: 'models/nn/nn_model.json'
+    n_iter: 30
+    params:
+      hidden_layers: [(32,),(64,), (64, 32),(128, 64),(128, 64, 32)]
+      activation: ['relu', 'tanh']
+      alpha: [0.001, 0.01, 0.1]
+      batch_size: [32, 64, 128]
+      learning_rate: [0.001, 0.01]
+      max_iter: [200, 400]
+
   voting_classifier:
     dir: 'models/voting'
     model: 'models/voting/vc_model.pkl'
     metadata: 'models/voting/vc_model.json'
     params:
       voting: 'soft'
-      estimators: ['lr','rf']
-      weights: [1.5, 2]
+      estimators: ['lr','rf', 'nn']
+      weights: [1, 3, 2]
+
+
 
 
 ###################################################################
