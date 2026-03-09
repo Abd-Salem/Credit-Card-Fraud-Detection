@@ -1,6 +1,7 @@
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import StratifiedKFold, GridSearchCV, RandomizedSearchCV
 from imblearn.pipeline import  Pipeline
 from config import config
@@ -8,7 +9,6 @@ from credit_fraud_utils_data import feature_transformation, get_processed_data, 
 from credit_fraud_utils_eval import model_eval_report, avg_pr_fb_score
 from collections import Counter
 import json, joblib
-import numpy as np
 
 
 def logistic_regression_model(sample_technique:(str | None) = None):
@@ -95,7 +95,7 @@ def random_forest_model(sample_technique:(str | None) = None):
     }
 
     rand_grid = RandomizedSearchCV(pipeline, param_distributions=params,
-                        n_iter=config.MODELS['random_forest']['n_iter'],scoring='average_precision',
+                        n_iter=config.MODELS['random_forest']['n_iter'],scoring=config.EVALUATION['scoring'],
                               cv=skf, n_jobs=3)
 
     rand_grid.fit(x_train, t_train)           # best parameters
@@ -122,20 +122,79 @@ def random_forest_model(sample_technique:(str | None) = None):
         json.dump(metadata, f, indent=4)
 
 
-def voting_classifier(sampling_technique:(str|None)=None):
+
+def neural_network_classifier(sample_technique:(str|None) = None):
+
+    '''
+    - Train neural network model (MLPClassifier)
+    parameter:
+        sample_technique(list | None): technique which data processed with
+    '''
+
+    # get processed data
+    x_train, x_val, t_train, t_val = get_processed_data(sample_technique=sample_technique)
+
+    # stratified is a good way to keep class distribution as it is in each fold.
+    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=config.RANDOM_STATE)
+
+    # pipelining feature engineering, sampling and model training
+    pipeline = Pipeline([
+        ('data_preprocessing', feature_transformation(preprocessing_type=config.PREPROCESSING['scaler'])),
+        ('model', MLPClassifier(random_state=config.RANDOM_STATE))
+    ])
+
+    params = {
+        'model__hidden_layer_sizes':         [(32,),(64,), (64, 32),(128, 64),(128, 64, 32)],
+        'model__activation':                  config.MODELS['neural_network']['params']['activation'],
+        'model__alpha':                       config.MODELS['neural_network']['params']['alpha'],
+        'model__learning_rate_init':          config.MODELS['neural_network']['params']['learning_rate'],
+        'model__batch_size':                  config.MODELS['neural_network']['params']['batch_size'],
+        'model__max_iter':                    config.MODELS['neural_network']['params']['max_iter']
+    }
+
+    rand_grid = RandomizedSearchCV(pipeline, param_distributions=params,
+                        n_iter=config.MODELS['neural_network']['n_iter'],scoring=config.EVALUATION['scoring'],
+                              cv=skf, n_jobs=3)
+
+    rand_grid.fit(x_train, t_train)           # best parameters
+    model = rand_grid.best_estimator_                # best model
+
+
+    # save model
+    joblib.dump(model, config.MODELS['neural_network']['model'])
+
+    # evaluate using avg precision score and f-beta metrics and show plot with best threshold
+    result = avg_pr_fb_score(model, x_val, t_val, beta=config.EVALUATION['beta'], show_plot=False)
+
+    # classification report using best threshold given from evaluation
+    report = model_eval_report(model, x_val, t_val, result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
+
+
+    # save model metadata
+    metadata = {
+        'model_params': rand_grid.best_params_,
+        f'results' : result,
+        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report
+    }
+
+    with open(config.MODELS['neural_network']['metadata'], 'w') as f:
+        json.dump(metadata, f, indent=4)
+
+
+def voting_classifier(sample_technique:(str|None)=None):
 
     # load trained models
     lr_model = joblib.load(config.MODELS['logistic_regression']['model'])
     rf_model = joblib.load(config.MODELS['random_forest']['model'])
+    nn_model = joblib.load(config.MODELS['neural_network']['model'])
 
     # prepare estimators
     names = config.MODELS['voting_classifier']['params']['estimators']
-    models = [lr_model, rf_model]
+    models = [lr_model, rf_model, nn_model]
     estimators = list(zip(names, models))
 
     # get prepared data not sampled
-    x_train,x_val, t_train, t_val = get_processed_data(sample_technique=None)
-
+    x_train,x_val, t_train, t_val = get_processed_data(sample_technique=sample_technique)
 
     # voting classifier
     voting = VotingClassifier(estimators=estimators, voting=config.MODELS['voting_classifier']['params']['voting'],
@@ -162,10 +221,12 @@ def voting_classifier(sampling_technique:(str|None)=None):
         json.dump(metadata, f, indent=4)
 
 
-
-
-
 if __name__ == '__main__':
-    # logistic_regression_model(sample_technique='smoteenn')
-    # random_forest_model(sample_technique='smoteenn')
-    voting_classifier(sampling_technique='smoteenn')
+    # prepare models for training
+    train_models = [
+        logistic_regression_model, random_forest_model,
+        neural_network_classifier, voting_classifier
+    ]
+    # run training for all models
+    for model in train_models:
+        model(sample_technique='smoteenn')
