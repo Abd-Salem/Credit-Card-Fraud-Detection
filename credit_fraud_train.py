@@ -1,11 +1,10 @@
-import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import StratifiedKFold, GridSearchCV, RandomizedSearchCV
 from imblearn.pipeline import  Pipeline
 from config import config
-from credit_fraud_utils_data import feature_transformation, get_processed_data, load_data
+from credit_fraud_utils_data import feature_transformation, get_processed_data
 from credit_fraud_utils_eval import model_eval_report, avg_pr_fb_score
 from collections import Counter
 import json, joblib
@@ -54,12 +53,14 @@ def logistic_regression_model(sample_technique:(str | None) = None):
     result = avg_pr_fb_score(model, x_val, t_val, beta=config.EVALUATION['beta'], show_plot=False)
 
     # classification report using best threshold given from evaluation
-    report = model_eval_report(model, x_val, t_val, result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
+    report_1 = model_eval_report(model, x_val, t_val, threshold=result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
+    report_2 = model_eval_report(model, x_val, t_val, threshold=0.5)
 
     metadata = {
         'model_params': grid.best_params_,
         f'results' : result,
-        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report
+        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report_1,
+        f'classification_report(threshold=0.5)' : report_2
     }
 
     # save model metadata
@@ -108,14 +109,16 @@ def random_forest_model(sample_technique:(str | None) = None):
     result = avg_pr_fb_score(model, x_val, t_val, beta=config.EVALUATION['beta'], show_plot=False)
 
     # classification report using best threshold given from evaluation
-    report = model_eval_report(model, x_val, t_val, result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
+    report_1 = model_eval_report(model, x_val, t_val, threshold=result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
+    report_2 = model_eval_report(model, x_val, t_val, threshold=0.5)
 
 
     # save model metadata
     metadata = {
         'model_params': rand_grid.best_params_,
         f'results' : result,
-        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report
+        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report_1,
+        'classification_report(threshold=0.5)' : report_2
     }
 
     with open(config.MODELS['random_forest']['metadata'], 'w') as f:
@@ -167,14 +170,16 @@ def neural_network_classifier(sample_technique:(str|None) = None):
     result = avg_pr_fb_score(model, x_val, t_val, beta=config.EVALUATION['beta'], show_plot=False)
 
     # classification report using best threshold given from evaluation
-    report = model_eval_report(model, x_val, t_val, result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
+    report_1 = model_eval_report(model, x_val, t_val, threshold=result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
+    report_2 = model_eval_report(model, x_val, t_val, threshold=0.5)
 
 
     # save model metadata
     metadata = {
         'model_params': rand_grid.best_params_,
         f'results' : result,
-        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report
+        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report_1,
+        'classification_report(threshold=0.5)' : report_2
     }
 
     with open(config.MODELS['neural_network']['metadata'], 'w') as f:
@@ -210,12 +215,14 @@ def voting_classifier(sample_technique:(str|None)=None):
     result = avg_pr_fb_score(voting, x_val, t_val, beta=config.EVALUATION['beta'], show_plot=False)
 
     # classification report using best threshold given from evaluation
-    report = model_eval_report(voting, x_val, t_val, result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
+    report_1 = model_eval_report(voting, x_val, t_val, threshold=result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
+    report_2 = model_eval_report(voting, x_val, t_val, threshold=0.5)
 
     # save model metadata
     metadata = {
         f'results' : result,
-        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report
+        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report_1,
+        'classification_report(threshold=0.5)': report_2
     }
     with open(config.MODELS['voting_classifier']['metadata'], 'w') as f:
         json.dump(metadata, f, indent=4)
