@@ -27,18 +27,18 @@ dataset:
 
 ###################################################################
 preprocessing:
-  scaler: 'standard'
+  scaler: ['standard', 'robust']
 
 ###################################################################
 features:
   target: 'Class'
-  log_trans: ['Amount']
+  log_trans: ['Amount', 'V8', 'V28']
   numeric: ['Time', 'V1', 'V2', 'V3', 'V4', 'V5',
-                    'V6', 'V7', 'V8', 'V9', 'V10', 'V11',
+                    'V6', 'V7', 'V9', 'V10', 'V11',
                     'V12', 'V13', 'V14', 'V15', 'V16',
                     'V17', 'V18', 'V19', 'V20', 'V21',
                     'V22', 'V23', 'V24', 'V25', 'V26',
-                    'V27', 'V28', 'hour', 'minute','second']
+                    'V27', 'hour', 'minute','second']
 
 ###################################################################
 sampling:
@@ -60,7 +60,8 @@ models:
   logistic_regression:
     dir: 'models/lr'
     model: 'models/lr/lr_model.pkl'
-    metadata: 'models/lr/lr_model.json'
+    metadata: 'models/lr/lr_model_params.json'
+    eval: 'models/lr/lr_model_eval_scores.json'
     params:
       solver: ['lbfgs', 'newton-cg', 'liblinear']
       max_iter: [100, 500, 800, 1000, 2000]
@@ -70,7 +71,8 @@ models:
   random_forest:
     dir: 'models/rf'
     model: 'models/rf/rf_model.pkl'
-    metadata: 'models/rf/rf_model.json'
+    metadata: 'models/rf/rf_model_params.json'
+    eval: 'model/rf/rf_model_eval_scores.json'
     n_iter: 25
     params:
       max_depth: [15, 20, 25]
@@ -82,10 +84,16 @@ models:
   neural_network:
     dir: 'models/nn'
     model: 'models/nn/nn_model.pkl'
-    metadata: 'models/nn/nn_model.json'
+    metadata: 'models/nn/nn_model_params.json'
+    eval: 'model/nn/nn_model_eval_socres.json'
     n_iter: 30
     params:
-      hidden_layers: [(32,),(64,), (64, 32),(128, 64),(128, 64, 32)]
+      hidden_layers:
+      - [32]
+      - [64]
+      - [64, 32]
+      - [128, 64]
+      - [128, 64, 32]
       activation: ['relu', 'tanh']
       alpha: [0.001, 0.01, 0.1]
       batch_size: [32, 64, 128]
@@ -95,13 +103,12 @@ models:
   voting_classifier:
     dir: 'models/voting'
     model: 'models/voting/vc_model.pkl'
-    metadata: 'models/voting/vc_model.json'
+    metadata: 'models/voting/vc_model_params.json'
+    eval: 'models/voting/vc_model_eval_scores.json'
     params:
-      voting: 'soft'
+      voting: ['soft', 'hard']
       estimators: ['lr','rf', 'nn']
-      weights: [1, 3, 2]
-
-
+      weights: [[1, 1, 1], [1, 2, 3], [1, 3, 2]]
 
 
 ###################################################################
