@@ -16,7 +16,7 @@ class Config:
 
         self._create_dirs()
 
-    # create dir for processed data
+    # create dir for processed data and trained models
     def _create_dirs(self):
         dirs = [
             self.DATASET['prepared']['dir'],
