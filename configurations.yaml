@@ -9,21 +9,57 @@ dataset:
 
   prepared:
     dir: 'processed_data/prepared'
-    train: 'processed_data/prepared/train.npz'
-    train_metadata: 'processed_data/prepared/train_metadata.json'
-    val: 'processed_data/prepared/val.npz'
-    val_metadata: 'processed_data/prepared/val_metadata.json'
-    train_val:  'processed_data/prepared/train+val.npz'
-    train_val_metadata: 'processed_data/prepared/train+val_metadata.json'
-    test:  'processed_data/prepared/test.npz'
-    test_metadata: 'processed_data/prepared/test_metadata.json'
+    train:
+      dir: 'processed_data/prepared/train'
+      data: 'processed_data/prepared/train/train.npz'
+      metadata: 'processed_data/prepared/train/train_metadata.json'
+    val:
+      dir: 'processed_data/prepared/val'
+      data: 'processed_data/prepared/val/val.npz'
+      metadata: 'processed_data/prepared/val/val_metadata.json'
+    train_val:
+      dir: 'processed_data/prepared/train+val'
+      data: 'processed_data/prepared/train+val/train+val.npz'
+      metadata: 'processed_data/prepared/train+val/train+val_metadata.json'
+    test:
+      dir: 'processed_data/prepared/test'
+      data: 'processed_data/prepared/test/test.npz'
+      metadata: 'processed_data/prepared/test/test_metadata.json'
 
   sampled:
     dir: 'processed_data/sampled'
-    train: 'processed_data/sampled/train'
-    train_metadata: 'processed_data/sampled/train_metadata'
-    train_val: 'processed_data/sampled/train+val'
-    train_val_metadata: 'processed_data/sampled/train+val_metadata'
+    rus:
+      dir: 'processed_data/sampled/rus'
+      train: 'processed_data/sampled/rus/train.npz'
+      train_metadata: 'processed_data/sampled/rus/train_metadata.json'
+      train_val: 'processed_data/sampled/rus/train+val.npz'
+      train_val_metadata: 'processed_data/sampled/rus/train+val_metadata.json'
+    enn:
+      dir: 'processed_data/sampled/enn'
+      train: 'processed_data/sampled/enn/train.npz'
+      train_metadata: 'processed_data/sampled/enn/train_metadata.json'
+      train_val: 'processed_data/sampled/enn/train+val.npz'
+      train_val_metadata: 'processed_data/sampled/enn/train+val_metadata.json'
+    smote:
+      dir: 'processed_data/sampled/smote'
+      train: 'processed_data/sampled/smote/train.npz'
+      train_metadata: 'processed_data/sampled/smote/train_metadata.json'
+      train_val: 'processed_data/sampled/smote/train+val.nzp'
+      train_val_metadata: 'processed_data/sampled/smote/train+val_metadata.json'
+    smoteenn:
+      dir: 'processed_data/sampled/smoteenn'
+      train: 'processed_data/sampled/smoteenn/train.npz'
+      train_metadata: 'processed_data/sampled/smoteenn/train_metadata.json'
+      train_val: 'processed_data/sampled/smoteenn/train+val.npz'
+      train_val_metadata: 'processed_data/sampled/smoteenn/train+val_metadata.json'
+    smotetomek:
+      dir: 'processed_data/sampled/smotetomek'
+      train: 'processed_data/sampled/smotetomek/train.npz'
+      train_metadata: 'processed_data/sampled/smotetomek/train_metadata.json'
+      train_val: 'processed_data/sampled/smotetomek/train+val.npz'
+      train_val_metadata: 'processed_data/sampled/smotetomek/train+val_metadata.json'
+
+
 
 ###################################################################
 preprocessing:
@@ -32,13 +68,13 @@ preprocessing:
 ###################################################################
 features:
   target: 'Class'
-  log_trans: ['Amount', 'V8', 'V28']
-  numeric: ['Time', 'V1', 'V2', 'V3', 'V4', 'V5',
-                    'V6', 'V7', 'V9', 'V10', 'V11',
+  log_trans: ['Amount']
+  numeric: ['Amount','Time', 'V1', 'V2', 'V3', 'V4', 'V5',
+                    'V6', 'V7', 'V8', 'V9', 'V10', 'V11',
                     'V12', 'V13', 'V14', 'V15', 'V16',
                     'V17', 'V18', 'V19', 'V20', 'V21',
                     'V22', 'V23', 'V24', 'V25', 'V26',
-                    'V27', 'hour', 'minute','second']
+                    'V27', 'V28','hour', 'minute','second']
 
 ###################################################################
 sampling:
@@ -59,33 +95,120 @@ models:
 
   logistic_regression:
     dir: 'models/lr'
-    model: 'models/lr/lr_model.pkl'
-    metadata: 'models/lr/lr_model_params.json'
-    eval: 'models/lr/lr_model_eval_scores.json'
+    sample:
+      none:
+        dir: 'models/lr/none'
+        model: 'models/lr/none/model.pkl'
+        metadata: 'models/lr/none/model_params.json'
+        eval: 'models/lr/none/model_eval_scores.json'
+      rus:
+        dir: 'models/lr/rus'
+        model: 'models/lr/rus/model.pkl'
+        metadata: 'models/lr/rus/model_params.json'
+        eval: 'models/lr/rus/model_eval_scores.json'
+      enn:
+        dir: 'models/lr/enn'
+        model: 'models/lr/enn/model.pkl'
+        metadata: 'models/lr/enn/model_params.json'
+        eval: 'models/lr/enn/model_eval_scores.json'
+      smote:
+        dir: 'models/lr/smote'
+        model: 'models/lr/smote/model.pkl'
+        metadata: 'models/lr/smote/model_params.json'
+        eval: 'models/lr/smote/model_eval_scores.json'
+      smoteenn:
+        dir: 'models/lr/smoteenn'
+        model: 'models/lr/smoteenn/model.pkl'
+        metadata: 'models/lr/smoteenn/model_params.json'
+        eval: 'models/lr/smoteenn/model_eval_scores.json'
+      smotetomek:
+        dir: 'models/lr/smotetomek'
+        model: 'models/lr/smotetomek/model.pkl'
+        metadata: 'models/lr/smotetomek/model_params.json'
+        eval: 'models/lr/smotetomek/model_eval_scores.json'
+
     params:
       solver: ['lbfgs', 'newton-cg', 'liblinear']
       max_iter: [100, 500, 800, 1000, 2000]
-      class_weight: [0.2, 0.5, 0.8, 1]
+      class_weight: ['balanced', {1: 5, 0: 1}, {1: 10, 0: 1}, {1: 20, 0: 1}]
 
 
   random_forest:
     dir: 'models/rf'
-    model: 'models/rf/rf_model.pkl'
-    metadata: 'models/rf/rf_model_params.json'
-    eval: 'model/rf/rf_model_eval_scores.json'
+    sample:
+      none:
+        dir: 'models/rf/none'
+        model: 'models/rf/none/model.pkl'
+        metadata: 'models/rf/none/model_params.json'
+        eval: 'models/rf/none/model_eval_scores.json'
+      rus:
+        dir: 'models/rf/rus'
+        model: 'models/rf/rus/model.pkl'
+        metadata: 'models/rf/rus/model_params.json'
+        eval: 'models/rf/rus/model_eval_scores.json'
+      enn:
+        dir: 'models/rf/enn'
+        model: 'models/rf/enn/model.pkl'
+        metadata: 'models/rf/enn/model_params.json'
+        eval: 'models/rf/enn/model_eval_scores.json'
+      smote:
+        dir: 'models/rf/smote'
+        model: 'models/rf/smote/model.pkl'
+        metadata: 'models/rf/smote/model_params.json'
+        eval: 'models/rf/smote/model_eval_scores.json'
+      smoteenn:
+        dir: 'models/rf/smoteenn'
+        model: 'models/rf/smoteenn/model.pkl'
+        metadata: 'models/rf/smoteenn/model_params.json'
+        eval: 'models/rf/smoteenn/model_eval_scores.json'
+      smotetomek:
+        dir: 'models/rf/smotetomek'
+        model: 'models/rf/smotetomek/model.pkl'
+        metadata: 'models/rf/smotetomek/model_params.json'
+        eval: 'models/rf/smotetomek/model_eval_scores.json'
+
     n_iter: 25
     params:
       max_depth: [15, 20, 25]
       max_features: ['sqrt']
       n_estimators: [300, 400, 600]
       min_samples_leaf: [2, 5]
-      class_weight: [0.5, 0.8, 1]
+      class_weight: ['balanced', {1: 5, 0: 1}, {1: 10, 0: 1}, {1: 20, 0: 1}]
 
   neural_network:
     dir: 'models/nn'
-    model: 'models/nn/nn_model.pkl'
-    metadata: 'models/nn/nn_model_params.json'
-    eval: 'model/nn/nn_model_eval_socres.json'
+    sample:
+      none:
+        dir: 'models/nn/none'
+        model: 'models/nn/none/model.pkl'
+        metadata: 'models/nn/none/model_params.json'
+        eval: 'models/nn/none/model_eval_scores.json'
+      rus:
+        dir: 'models/nn/rus'
+        model: 'models/nn/rus/model.pkl'
+        metadata: 'models/nn/rus/model_params.json'
+        eval: 'models/nn/rus/model_eval_scores.json'
+      enn:
+        dir: 'models/nn/enn'
+        model: 'models/nn/enn/model.pkl'
+        metadata: 'models/nn/enn/model_params.json'
+        eval: 'models/nn/enn/model_eval_scores.json'
+      smote:
+        dir: 'models/nn/smote'
+        model: 'models/nn/smote/model.pkl'
+        metadata: 'models/nn/smote/model_params.json'
+        eval: 'models/nn/smote/model_eval_scores.json'
+      smoteenn:
+        dir: 'models/nn/smoteenn'
+        model: 'models/nn/smoteenn/model.pkl'
+        metadata: 'models/nn/smoteenn/model_params.json'
+        eval: 'models/nn/smoteenn/model_eval_scores.json'
+      smotetomek:
+        dir: 'models/nn/smotetomek'
+        model: 'models/nn/smotetomek/model.pkl'
+        metadata: 'models/nn/smotetomek/model_params.json'
+        eval: 'models/nn/smotetomek/model_eval_scores.json'
+
     n_iter: 30
     params:
       hidden_layers:
@@ -102,11 +225,40 @@ models:
 
   voting_classifier:
     dir: 'models/voting'
-    model: 'models/voting/vc_model.pkl'
-    metadata: 'models/voting/vc_model_params.json'
-    eval: 'models/voting/vc_model_eval_scores.json'
+    sample:
+      none:
+        dir: 'models/voting/none'
+        model: 'models/voting/none/model.pkl'
+        metadata: 'models/voting/none/model_params.json'
+        eval: 'models/voting/none/model_eval_scores.json'
+      rus:
+        dir: 'models/voting/rus'
+        model: 'models/voting/rus/model.pkl'
+        metadata: 'models/voting/rus/model_params.json'
+        eval: 'models/voting/rus/model_eval_scores.json'
+      enn:
+        dir: 'models/voting/enn'
+        model: 'models/voting/enn/model.pkl'
+        metadata: 'models/voting/enn/model_params.json'
+        eval: 'models/voting/enn/model_eval_scores.json'
+      smote:
+        dir: 'models/voting/smote'
+        model: 'models/voting/smote/model.pkl'
+        metadata: 'models/voting/smote/model_params.json'
+        eval: 'models/voting/smote/model_eval_scores.json'
+      smoteenn:
+        dir: 'models/voting/smoteenn'
+        model: 'models/voting/smoteenn/model.pkl'
+        metadata: 'models/voting/smoteenn/model_params.json'
+        eval: 'models/voting/smoteenn/model_eval_scores.json'
+      smotetomek:
+        dir: 'models/voting/smotetomek'
+        model: 'models/voting/smotetomek/model.pkl'
+        metadata: 'models/voting/smotetomek/model_params.json'
+        eval: 'models/voting/smotetomek/model_eval_scores.json'
+
     params:
-      voting: ['soft', 'hard']
+      voting: 'soft'
       estimators: ['lr','rf', 'nn']
       weights: [[1, 1, 1], [1, 2, 3], [1, 3, 2]]
 
