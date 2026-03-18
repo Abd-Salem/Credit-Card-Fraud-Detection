@@ -1,41 +1,49 @@
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.model_selection import StratifiedKFold, GridSearchCV, RandomizedSearchCV
+from sklearn.model_selection import StratifiedKFold, GridSearchCV, RandomizedSearchCV, cross_val_score
 from imblearn.pipeline import  Pipeline
-from config import config
-from credit_fraud_utils_data import feature_transformation, get_processed_data
-from credit_fraud_utils_eval import model_eval_report, avg_pr_fb_score
+from sklearn.preprocessing import LabelEncoder
 from collections import Counter
+from credit_fraud_utils_helper import get_processed_train_data, get_preprocessing_methods, save_best_model
 import json, joblib
+import pandas as pd
 
 
-def logistic_regression_model(sample_technique:(str | None) = None):
+def logistic_regression_model(x_train:pd.DataFrame, t_train:pd.Series, *,
+                              sample_technique:str='none', config=None):
     '''
-    Train Logistic Regression Model
-    parameter:
-        sample_technique(str|None): technique which data processed with
+    Train logistic regression model
+    :param x_train: input features
+    :param t_train: target feature
+    :param sample_technique: which data processed with
+    :param config: config loader
+    :return: None
     '''
-
-    x_train, x_val, t_train, t_val = get_processed_data(sample_technique=sample_technique)
 
     # stratified is a good way to keep class distribution as it is in each fold.
     skf = StratifiedKFold(n_splits=config.EVALUATION['cv_folds'], shuffle=True, random_state=config.RANDOM_STATE)
 
+    # get scalers
+    scalers = get_preprocessing_methods()
+
     # pipelining feature engineering, sampling and model training
     pipeline = Pipeline([
-        ('col_trans', feature_transformation(preprocessing_type=config.PREPROCESSING['scaler'])),
+        ('scaler', scalers['standard']),
         ('model', LogisticRegression(random_state=config.RANDOM_STATE))
     ])
 
-    # classes ratio
+    # get classes ratio and add it to class weights
     count = Counter(t_train)
     ratio = count[1]/count[0]
+    class_weight = config.MODELS['logistic_regression']['params']['class_weight']
+    class_weight.append({1:1, 0:ratio})
 
     # grid parameters
     param_grid = {
+        'scaler':                   list(scalers.values()),
         'model__solver':            config.MODELS['logistic_regression']['params']['solver'],
-        'model__class_weight':      [{1:wt} for wt in config.MODELS['logistic_regression']['params']['class_weight']+[ratio]],
+        'model__class_weight':      class_weight,
         'model__max_iter':          config.MODELS['logistic_regression']['params']['max_iter']
     }
 
@@ -44,110 +52,108 @@ def logistic_regression_model(sample_technique:(str | None) = None):
                         scoring=config.EVALUATION['scoring'], cv=skf, n_jobs=3)
 
     grid.fit(x_train, t_train)                  # fit model
-    model = grid.best_estimator_                # best model
 
-    # save model
-    joblib.dump(model, config.MODELS['logistic_regression']['model'])
-
-    # evaluate using avg precision score and f-beta metrics and show plot with best threshold
-    result = avg_pr_fb_score(model, x_val, t_val, beta=config.EVALUATION['beta'], show_plot=False)
-
-    # classification report using best threshold given from evaluation
-    report_1 = model_eval_report(model, x_val, t_val, threshold=result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
-    report_2 = model_eval_report(model, x_val, t_val, threshold=0.5)
-
-    metadata = {
-        'model_params': grid.best_params_,
-        f'results' : result,
-        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report_1,
-        f'classification_report(threshold=0.5)' : report_2
+    # clean strings no objects
+    best_params = {k: str(v) for k, v in grid.best_params_.items()}
+    rest = {
+        'best_score' : grid.best_score_,
+        'sample_technique' : sample_technique
     }
 
-    # save model metadata
-    with open(config.MODELS['logistic_regression']['metadata'], 'w') as f:
-        json.dump(metadata, f, indent=4)
+    # dict of model params & score
+    lr_meta = {
+        **best_params,
+        **rest
+    }
 
+    save_best_model(grid.best_estimator_, lr_meta,
+                    model_path=config.MODELS['logistic_regression']['sample'][sample_technique]['model'],
+                    metadata_path=config.MODELS['logistic_regression']['sample'][sample_technique]['metadata'])
 
-
-def random_forest_model(sample_technique:(str | None) = None):
+def random_forest_model(x_train:pd.DataFrame, t_train:pd.Series, *,
+                        sample_technique:str='none', config=None):
     '''
-    - train random forest model
-    parameter:
-        sample_technique(list | None): technique which data processed with
+    Train random forest model (tree-based algorithm)
+    :param x_train: input features
+    :param t_train: target feature
+    :param sample_technique: which data processed with
+    :param config: config loader
+    :return: None
     '''
 
-    # get processed data
-    x_train, x_val, t_train, t_val = get_processed_data(sample_technique=sample_technique)
 
     # stratified is a good way to keep class distribution as it is in each fold.
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=config.RANDOM_STATE)
 
+    # get scalers
+    scalers = get_preprocessing_methods()
+
     # pipelining feature engineering, sampling and model training
     pipeline = Pipeline([
-        ('data_preprocessing', feature_transformation(preprocessing_type=config.PREPROCESSING['scaler'])),
+        ('scaler' , scalers['standard']),
         ('model', RandomForestClassifier(random_state=config.RANDOM_STATE ,n_jobs=3))
     ])
 
     params = {
+        'scaler':                   list(scalers.values()),
         'model__max_depth':         config.MODELS['random_forest']['params']['max_depth'],
         'model__n_estimators':      config.MODELS['random_forest']['params']['n_estimators'],
         'model__min_samples_leaf':  config.MODELS['random_forest']['params']['min_samples_leaf'],
-        'model__class_weight':      [{1 : wt} for wt in config.MODELS['random_forest']['params']['class_weight']]
+        'model__class_weight':      config.MODELS['random_forest']['params']['class_weight']
     }
 
     rand_grid = RandomizedSearchCV(pipeline, param_distributions=params,
                         n_iter=config.MODELS['random_forest']['n_iter'],scoring=config.EVALUATION['scoring'],
                               cv=skf, n_jobs=3)
 
-    rand_grid.fit(x_train, t_train)           # best parameters
-    model = rand_grid.best_estimator_                # best model
+    rand_grid.fit(x_train, t_train)           # fit model
 
-    # save model
-    joblib.dump(model, config.MODELS['random_forest']['model'])
-
-    # evaluate using avg precision score and f-beta metrics and show plot with best threshold
-    result = avg_pr_fb_score(model, x_val, t_val, beta=config.EVALUATION['beta'], show_plot=False)
-
-    # classification report using best threshold given from evaluation
-    report_1 = model_eval_report(model, x_val, t_val, threshold=result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
-    report_2 = model_eval_report(model, x_val, t_val, threshold=0.5)
-
-
-    # save model metadata
-    metadata = {
-        'model_params': rand_grid.best_params_,
-        f'results' : result,
-        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report_1,
-        'classification_report(threshold=0.5)' : report_2
+    # clean strings no objects
+    best_params = {k: str(v) for k, v in rand_grid.best_params_.items()}
+    rest = {
+        'best_score' : rand_grid.best_score_,
+        'sample_technique' : sample_technique
     }
 
-    with open(config.MODELS['random_forest']['metadata'], 'w') as f:
-        json.dump(metadata, f, indent=4)
+    # dict of model params & score
+    rf_meta = {
+        **best_params,
+        **rest
+    }
+
+    # save best model with its parameters
+    save_best_model(rand_grid.best_estimator_, rf_meta,
+                    model_path=config.MODELS['random_forest']['sample'][sample_technique]['model']
+                    , metadata_path=config.MODELS['random_forest']['sample'][sample_technique]['metadata'])
 
 
-
-def neural_network_classifier(sample_technique:(str|None) = None):
+def neural_network_classifier(x_train:pd.DataFrame, t_train:pd.Series, *,
+                              sample_technique:str='none', config=None):
 
     '''
-    - Train neural network model (MLPClassifier)
-    parameter:
-        sample_technique(list | None): technique which data processed with
+    train neural network model (MLPClassifier)
+    :param x_train: input features
+    :param t_train: target feature
+    :param sample_technique: which data processed with
+    :param config: config loader
+    :return: None
     '''
-
-    # get processed data
-    x_train, x_val, t_train, t_val = get_processed_data(sample_technique=sample_technique)
 
     # stratified is a good way to keep class distribution as it is in each fold.
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=config.RANDOM_STATE)
 
+    # get scalers
+    scalers = get_preprocessing_methods()
+
     # pipelining feature engineering, sampling and model training
     pipeline = Pipeline([
-        ('data_preprocessing', feature_transformation(preprocessing_type=config.PREPROCESSING['scaler'])),
+        ('scaler', scalers['standard']),
         ('model', MLPClassifier(random_state=config.RANDOM_STATE))
     ])
 
     params = {
-        'model__hidden_layer_sizes':         [(32,),(64,), (64, 32),(128, 64),(128, 64, 32)],
+        'scaler':                             list(scalers.values()),
+        'model__hidden_layer_sizes':          [tuple(hid_sze) for hid_sze in config.MODELS['neural_network']['params']['hidden_layers']],
         'model__activation':                  config.MODELS['neural_network']['params']['activation'],
         'model__alpha':                       config.MODELS['neural_network']['params']['alpha'],
         'model__learning_rate_init':          config.MODELS['neural_network']['params']['learning_rate'],
@@ -159,34 +165,38 @@ def neural_network_classifier(sample_technique:(str|None) = None):
                         n_iter=config.MODELS['neural_network']['n_iter'],scoring=config.EVALUATION['scoring'],
                               cv=skf, n_jobs=3)
 
-    rand_grid.fit(x_train, t_train)           # best parameters
-    model = rand_grid.best_estimator_                # best model
+    rand_grid.fit(x_train, t_train)           # fit model
 
 
-    # save model
-    joblib.dump(model, config.MODELS['neural_network']['model'])
-
-    # evaluate using avg precision score and f-beta metrics and show plot with best threshold
-    result = avg_pr_fb_score(model, x_val, t_val, beta=config.EVALUATION['beta'], show_plot=False)
-
-    # classification report using best threshold given from evaluation
-    report_1 = model_eval_report(model, x_val, t_val, threshold=result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
-    report_2 = model_eval_report(model, x_val, t_val, threshold=0.5)
-
-
-    # save model metadata
-    metadata = {
-        'model_params': rand_grid.best_params_,
-        f'results' : result,
-        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report_1,
-        'classification_report(threshold=0.5)' : report_2
+    # clean strings no objects
+    best_params = {k: str(v) for k, v in rand_grid.best_params_.items()}
+    rest = {
+        'best_score' : rand_grid.best_score_,
+        'sample_technique' : sample_technique
     }
 
-    with open(config.MODELS['neural_network']['metadata'], 'w') as f:
-        json.dump(metadata, f, indent=4)
+    # dict of model params & score
+    nn_meta = {
+        **best_params,
+        **rest
+    }
+
+    # save best model with its parameters
+    save_best_model(rand_grid.best_estimator_, nn_meta,
+                    model_path=config.MODELS['neural_network']['sample'][sample_technique]['model']
+                    , metadata_path=config.MODELS['neural_network']['sample'][sample_technique]['metadata'])
 
 
-def voting_classifier(sample_technique:(str|None)=None):
+def voting_classifier(x_train:pd.DataFrame, t_train:pd.Series, *,
+                      sample_technique:str='none', config=None):
+    '''
+    Train voting classifier model
+    :param x_train: input features
+    :param t_train: target feature
+    :param sample_technique: which data processed with
+    :param config: config loader
+    :return: None
+    '''
 
     # load trained models
     lr_model = joblib.load(config.MODELS['logistic_regression']['model'])
@@ -198,42 +208,54 @@ def voting_classifier(sample_technique:(str|None)=None):
     models = [lr_model, rf_model, nn_model]
     estimators = list(zip(names, models))
 
-    # get prepared data not sampled
-    x_train,x_val, t_train, t_val = get_processed_data(sample_technique=sample_technique)
+    # stratified is a good way to keep class distribution as it is in each fold.
+    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=config.RANDOM_STATE)
 
-    # voting classifier
-    voting = VotingClassifier(estimators=estimators, voting=config.MODELS['voting_classifier']['params']['voting'],
-                              weights=config.MODELS['voting_classifier']['params']['weights'])
+    # initial values
+    best_score = -1
+    best_params = {}
 
-    # fit model
-    voting.fit(x_train, t_train)
+    # loop manually over different parameters to ensure freezing best trained models (no refit)
+    for weights in config.MODELS['voting_classifier']['params']['weights']:
+        voting = VotingClassifier(estimators=estimators, voting=config.MODELS['voting_classifier']['params']['voting']
+                                  , weights=weights)
 
-    # save model
-    joblib.dump(voting, config.MODELS['voting_classifier']['model'])
+        # freeze models (no refit)
+        voting.estimators_ = [lr_model, rf_model, nn_model]
+        voting.le_ = LabelEncoder().fit(t_train)
+        voting.classes_ = voting.le_.classes_
 
-    # evaluate using avg precision score and f-beta metrics and show plot with best threshold
-    result = avg_pr_fb_score(voting, x_val, t_val, beta=config.EVALUATION['beta'], show_plot=False)
+        # get scores
+        scores = cross_val_score(voting, x_train, t_train, cv=skf,
+                                 scoring=config.EVALUATION['scoring'], n_jobs=3)
+        # mean score
+        mean_score = scores.mean()
 
-    # classification report using best threshold given from evaluation
-    report_1 = model_eval_report(voting, x_val, t_val, threshold=result[f'best_threshold(f{config.EVALUATION['beta']}-score)'])
-    report_2 = model_eval_report(voting, x_val, t_val, threshold=0.5)
+        # get the best one
+        if mean_score > best_score:
+            best_score = mean_score
+            best_params = {'weights': weights, 'voting': config.MODELS['voting_classifier']['params']['voting']}
 
-    # save model metadata
-    metadata = {
-        f'results' : result,
-        f'classification_report(threshold={result[f'best_threshold(f{config.EVALUATION['beta']}-score)']})': report_1,
-        'classification_report(threshold=0.5)': report_2
-    }
-    with open(config.MODELS['voting_classifier']['metadata'], 'w') as f:
-        json.dump(metadata, f, indent=4)
+    # set voting model with best pretrained models
+    voting = VotingClassifier(estimators=estimators, voting=best_params['voting'], weights=best_params['weights'])
+    voting.estimators_ = [lr_model, rf_model, nn_model]
+    voting.le_ = LabelEncoder().fit(t_train)
+    voting.classes_ = voting.le_.classes_
 
-
-if __name__ == '__main__':
-    # prepare models for training
-    train_models = [
-        logistic_regression_model, random_forest_model,
-        neural_network_classifier, voting_classifier
+    # get models metadata
+    meta_paths = [
+        config.MODELS['logistic_regression']['sample'][sample_technique]['metadata'],
+        config.MODELS['random_forest']['sample'][sample_technique]['metadata'],
+        config.MODELS['neural_network']['sample'][sample_technique]['metadata']
     ]
-    # run training for all models
-    for model in train_models:
-        model(sample_technique='smoteenn')
+    # add best parameters
+    voting_meta = [best_params]
+    for path in meta_paths:
+        with open(path,'r') as f:
+            voting_meta.append(json.load(f))
+
+    # save best model
+    save_best_model(voting, voting_meta,
+                    model_path=config.MODELS['voting_classifier']['sample'][sample_technique]['model'],
+                    metadata_path=config.MODELS['voting_classifier']['sample'][sample_technique]['metadata'])
+

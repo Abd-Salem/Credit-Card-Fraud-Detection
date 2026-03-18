@@ -1,16 +1,22 @@
 import json
 import pandas as pd
 import numpy as np
-from config import config
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, FunctionTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
+from configs import Config
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler, EditedNearestNeighbours
 from imblearn.combine import SMOTEENN, SMOTETomek
 
+
+# create config loader
+config = Config()
+
 def load_data(path: str):
-    '''Load dataset and split to X, y'''
+    '''
+    Load dataset & split to X, y
+    :param path: data path
+    :return X: input
+    :return y: ground truth
+    '''
     df = pd.read_csv(path)
     X = df.drop(config.FEATURES['target'], axis=1)
     y = df[config.FEATURES['target']]
@@ -19,10 +25,9 @@ def load_data(path: str):
 
 def feature_construction(df:pd.DataFrame):
     '''
-    Extracting features from existence features
-
-    parameter:
-        df (DataFrame): dataset
+    Extracting new features according what concluded from EDA
+    :param df: dataset
+    :return: None
     '''
 
     df['hour'] = ((df['Time'] // 3600) % 24).astype(int)  # hours
@@ -39,51 +44,32 @@ def feature_construction(df:pd.DataFrame):
     df['high_amount'] = (df['Amount'] > 2000).astype(float)
 
 
-
-def feature_transformation(preprocessing_type:str ='standard'):
+def feature_transformation(df:pd.DataFrame):
     '''
-    Column transformation methods:
-        1- log transformation for skewed data ('Amount', 'V8', 'V28')
-        2- standard scaling for numeric features
-    parameter:
-        preprocessing_type (str): standard or minmax
-    return:
-        col_trans (ColumnTransformation): column transformation method for pipelining
+    Apply feature transformation methods for specific features:
+        1- log transformation for skewed data ('Amount')
+    :param df: data frame
     '''
 
-    # check for scaling type
-    scaler = StandardScaler()
-    if preprocessing_type == 'minmax':
-        scaler = MinMaxScaler()
-
-    # bridge the gap between numpy functions and sklearn's transformer interface
-    log_trans = Pipeline([
-        ('log_trans', FunctionTransformer(np.log1p)),
-        ('scaler', scaler)
-    ])
-    # column transformation steps
-    col_trans = ColumnTransformer([
-        ('log_trans', log_trans, config.FEATURES['log_trans']),
-        ('scaler', scaler, config.FEATURES['numeric'])
-    ], remainder='passthrough')
-    return col_trans
+    for col in config.FEATURES['log_trans']:
+        df[col] = np.log1p(df[col])
 
 
 def prepare_data(load_path:str='', target_preparing_path:str='', preparing_meta_path:str=''):
     '''
-    Data preparing before modeling:
-        - feature construction (extraction)
-    parameter:
-        load_path(str):             where data will be loaded from
-        target_preparing_path(str): where preparing data will be stored
-        target_meta_path(str):      where metadata will be stored
+    preparing methods (feature extraction - feature transformation)
+    :param load_path: data path
+    :param target_preparing_path: where prepared data will be saved
+    :param preparing_meta_path: where metadata of prepared data will be saved
+    :return: None
     '''
 
     # load data
     X, y =  load_data(load_path)
 
-    # apply feature construction step
+    # apply feature engineering
     feature_construction(df=X)
+    feature_transformation(df=X)
 
     # convert x & y to numpy array
     x = X.to_numpy()
@@ -101,8 +87,8 @@ def prepare_data(load_path:str='', target_preparing_path:str='', preparing_meta_
     # metadata of prepared data
     metadata= {
         'input_cols_names' : X.columns.tolist(),
-        'num_samples': X.shape[0],
-        'num_features': X.shape[1],
+        'n_samples': X.shape[0],
+        'n_features': X.shape[1],
     }
     # save in json file
     with open(preparing_meta_path, 'w') as f:
@@ -110,14 +96,13 @@ def prepare_data(load_path:str='', target_preparing_path:str='', preparing_meta_
 
 
 def sample_save_data(load_prepared_path:str='', load_meta_path:str='',
-                     target_sampling_path:str='', sample_meta_path:str=''):
+                     split_name:str = ''):
     '''
-    - Sample & save data with different techniques: oversampling, undersampling or both
-    parameter:
-        load_preparing_path(str):   where data will be loaded from
-        load_meta_path(str):        where metadat will be loaded from
-        target_preparing_path(str): where preparing data will be stored
-        sample_meta_path(str):      where metadata will be stored
+    apply all sample techniques for train split data and save for modeling fits
+    :param load_prepared_path: where prepared data saved
+    :param load_meta_path: where metadata of prepared data saved
+    :param split_name: name to get save path
+    :return: None
     '''
 
     # get prepared data from given paths
@@ -149,7 +134,7 @@ def sample_save_data(load_prepared_path:str='', load_meta_path:str='',
                              smote=SMOTE(k_neighbors=kn))
     }
 
-    # list of samples processes
+    # dict of samples processes
     samplers = {technique_name: sampler_map[technique_name] for technique_name in config.SAMPLING['techniques']}
 
     # apply all techniques on loaded data and save processed data in files
@@ -162,7 +147,7 @@ def sample_save_data(load_prepared_path:str='', load_meta_path:str='',
             'x_sampled': x_sampled,
             'y_sampled': y_sampled
         }
-        np.savez_compressed(f'{target_sampling_path}_{name}.npz', **sampled)
+        np.savez_compressed(f'{config.DATASET['sampled'][name][split_name]}', **sampled)
 
         # save metadata
         sample_metadata = {
@@ -170,77 +155,22 @@ def sample_save_data(load_prepared_path:str='', load_meta_path:str='',
             'num_samples': X.shape[0],
             'num_features': X.shape[1]
         }
-        with open(f'{sample_meta_path}_{name}.json', 'w') as f:
+        with open(f'{config.DATASET['sampled'][name][f'{split_name}_metadata']}', 'w') as f:
             json.dump(sample_metadata, f, indent=4)
-
-
-def get_processed_data(sample_technique: (str | None)=None):
-    '''
-    - get processed data for training & validation
-    parameter:
-        sample_technique(str | None): get train data according to technique
-    return:
-        x_train: processed train data
-        t_train: ground truth
-        x_val: processed val data
-        t_val: ground truth
-    '''
-    if sample_technique is None:
-        with open(config.DATASET['prepared']['train_metadata'], 'r') as f:
-            metadata = json.load(f)
-        cols_names = metadata['input_cols_names']
-
-        data = np.load(config.DATASET['prepared']['train'])
-        x_train, t_train = pd.DataFrame(data['x_prepared'], columns=cols_names), pd.Series(data['y_prepared'])
-
-    else:
-        # check if technique is passed wrong
-        if not sample_technique in config.SAMPLING['techniques']:
-            raise ValueError('''sample_technique must be value of these:
-             'rus', 'enn', 'smote', 'smoteenn', 'smotetome', 'None' ''')
-
-        with open(f'{config.DATASET['sampled']['train_metadata']}_{sample_technique}.json', 'r') as f:
-            metadata = json.load(f)
-        cols_names = metadata['input_cols_names']
-
-        data = np.load(f'{config.DATASET['sampled']['train']}_{sample_technique}.npz')
-        x_train, t_train = pd.DataFrame(data['x_sampled'], columns=cols_names), pd.Series(data['y_sampled'])
-
-    # load validation data for evaluation
-    val_data = np.load(config.DATASET['prepared']['val'])
-    x_val, t_val = pd.DataFrame(val_data['x_prepared'], columns=cols_names), pd.Series(val_data['y_prepared'])
-
-    return x_train, x_val, t_train, t_val
 
 
 if __name__ == '__main__':
 
     # prepare all data splits
-    prepare_data(load_path=config.DATASET['unprocessed']['train'],
-                 target_preparing_path=config.DATASET['prepared']['train'],
-                 preparing_meta_path=config.DATASET['prepared']['train_metadata'])
-
-    prepare_data(load_path=config.DATASET['unprocessed']['val'],
-                 target_preparing_path=config.DATASET['prepared']['val'],
-                 preparing_meta_path=config.DATASET['prepared']['val_metadata'])
-
-    prepare_data(load_path=config.DATASET['unprocessed']['train_val'],
-                 target_preparing_path=config.DATASET['prepared']['train_val'],
-                 preparing_meta_path=config.DATASET['prepared']['train_val_metadata'])
-
-    prepare_data(load_path=config.DATASET['unprocessed']['test'],
-                 target_preparing_path=config.DATASET['prepared']['test'],
-                 preparing_meta_path=config.DATASET['prepared']['test_metadata'])
+    splits_to_prepare = ['train', 'val', 'train_val', 'test']
+    splits_to_sample = ['train', 'train_val']
+    for split in splits_to_prepare:
+        prepare_data(load_path=config.DATASET['unprocessed'][split],
+                     target_preparing_path=config.DATASET['prepared'][split]['data'],
+                     preparing_meta_path=config.DATASET['prepared'][split]['metadata'])
 
     # sample train data
-    sample_save_data(load_prepared_path=config.DATASET['prepared']['train'],
-                     load_meta_path=config.DATASET['prepared']['train_metadata'],
-                     target_sampling_path=config.DATASET['sampled']['train'],
-                     sample_meta_path=config.DATASET['sampled']['train_metadata'])
-
-    sample_save_data(load_prepared_path=config.DATASET['prepared']['train_val'],
-                     load_meta_path=config.DATASET['prepared']['train_val_metadata'],
-                     target_sampling_path=config.DATASET['sampled']['train_val'],
-                     sample_meta_path=config.DATASET['sampled']['train_val_metadata'])
-
-
+    for split in splits_to_sample:
+        sample_save_data(load_prepared_path=config.DATASET['prepared'][split]['data'],
+                         load_meta_path=config.DATASET['prepared'][split]['metadata'],
+                         split_name=split)

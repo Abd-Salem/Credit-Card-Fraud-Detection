@@ -6,43 +6,34 @@ from sklearn.metrics import precision_recall_curve, classification_report, avera
 
 def model_eval_report(model, X, y_true, threshold=0.5):
     '''
-    Calculate metrics:
-        1- precision
-        2- recall
-        3- f1-score (each class - micro avg - macro avg - weighted avg - harmonic mean)
-     parameters:
-        model: trained model
-        X: input features
-        y_true: ground truth
-        threshold: control metrics calculations
-    return:
-        report: harmonic mean & report
+    get classification report with customized threshold
+    :param model: trained model
+    :param X: input
+    :param y_true: target
+    :param threshold: more control (default=0.5)
+    :return:
     '''
+
     y_pred = (model.predict_proba(X)[:, 1] >= threshold).astype(int)   # get predictions with specific threshold
 
     # calculate harmonic mean of f1-scores of both classes (sense small values which show weak classification angles of the model)
     report_dict = classification_report(y_true, y_pred, output_dict=True)    # get results in dict
     report_dict['hmean'] = hmean([report_dict['1']['f1-score'], report_dict['0']['f1-score']])
 
-    # get report
-    # report = classification_report(y_true, y_pred, output_dict=False, digits=4)
-
     return report_dict     # return harmonic mean & report
 
 
 def avg_pr_fb_score(model, X, y_true, beta=1, show_plot=False):
     '''
-    Plotting precision recall curve that show precision recall values with different thresholds
-    and calculate best threshold and average precision
-    parameter:
-        model:trained model
-        X: input features for prediction
-        y_true: ground truth
-        beta_score: indicates f-score(f1, f0.5, f2)
-        show_plot(bool): show plot or not
-    return:
-        result (dict): auprc, best_threshold(respect-to-class-1), f-beta scores of both classes
+    calculate avg precision and plot precision recall curve with the best threshold
+    :param model: trianed model
+    :param X: input
+    :param y_true: target
+    :param beta: f(beat)score
+    :param show_plot: if True it'll show the plot
+    :return result: dic with metrics scores
     '''
+
     y_proba = model.predict_proba(X)[:, 1]      # get predicted probabilities
     precisions, recalls, thresholds = precision_recall_curve(y_true, y_proba)      # precisions, recalls & thresholds
 
@@ -69,11 +60,11 @@ def avg_pr_fb_score(model, X, y_true, beta=1, show_plot=False):
         # plot precision recall curve
         precision, recall = precisions[:-1], recalls[:-1]     # exclude last value
         plt.plot(thresholds, precision, linestyle = '--', color='blue', label='Precision')       # threshold vs precision
-        plt.plot(thresholds, recall, linestyle='--', color='red', label='Recall')            # threshold vs recall
-        plt.axvline(best_threshold, color='green', linestyle='-', label=f'Best threshold: {best_threshold:.3f}')
+        plt.plot(thresholds, recall, linestyle='--', color='green', label='Recall')            # threshold vs recall
+        plt.axvline(best_threshold, color='red', linestyle='-', label=f'Best threshold: {best_threshold:.3f}')
         plt.title('Threshold VS Precision Recall', fontweight=12, fontstyle='italic', color='grey')
-        plt.xlabel('Threshold', color='green')
-        plt.ylabel('Precision-Recall', color='green')
+        plt.xlabel('Threshold', color='orange')
+        plt.ylabel('Precision-Recall', color='orange')
         plt.legend(loc='best')
         plt.show()
 
