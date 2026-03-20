@@ -1,0 +1,9 @@
+{
+    "scaler": "StandardScaler()",
+    "model__n_estimators": "400",
+    "model__min_samples_leaf": "5",
+    "model__max_depth": "15",
+    "model__class_weight": "{1: 10, 0: 1}",
+    "best_score": 0.988822045549691,
+    "sample_technique": "rus"
+}

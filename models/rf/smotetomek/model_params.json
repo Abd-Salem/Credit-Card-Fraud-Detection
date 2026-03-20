@@ -1,0 +1,9 @@
+{
+    "scaler": "StandardScaler()",
+    "model__n_estimators": "600",
+    "model__min_samples_leaf": "2",
+    "model__max_depth": "20",
+    "model__class_weight": "balanced",
+    "best_score": 0.9999963820386635,
+    "sample_technique": "smotetomek"
+}

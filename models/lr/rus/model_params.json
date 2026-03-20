@@ -1,0 +1,8 @@
+{
+    "model__class_weight": "{1: 5, 0: 1}",
+    "model__max_iter": "100",
+    "model__solver": "lbfgs",
+    "scaler": "StandardScaler()",
+    "best_score": 0.9857555942344425,
+    "sample_technique": "rus"
+}
