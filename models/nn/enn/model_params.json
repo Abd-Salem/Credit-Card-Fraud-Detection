@@ -1,0 +1,11 @@
+{
+    "scaler": "StandardScaler()",
+    "model__max_iter": "200",
+    "model__learning_rate_init": "0.001",
+    "model__hidden_layer_sizes": "(128, 64)",
+    "model__batch_size": "64",
+    "model__alpha": "0.001",
+    "model__activation": "relu",
+    "best_score": 0.8251551004589579,
+    "sample_technique": "enn"
+}
