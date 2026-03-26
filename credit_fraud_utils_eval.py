@@ -1,40 +1,63 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from scipy.stats import hmean
 from sklearn.metrics import precision_recall_curve, classification_report, average_precision_score, fbeta_score
 
 
-def model_eval_report(model, X, y_true, threshold=0.5):
+def model_eval_report(model, X, y_true, *
+                      ,threshold=0.5
+                      ,prediction_method=None):
     '''
     get classification report with customized threshold
     :param model: trained model
     :param X: input
     :param y_true: target
     :param threshold: more control (default=0.5)
+    :param prediction_method: callable function for customized prediction process (torch.nn models)
     :return:
     '''
 
-    y_pred = (model.predict_proba(X)[:, 1] >= threshold).astype(int)   # get predictions with specific threshold
+    # get predictions with specific threshold
+    if prediction_method is None:
+        y_preds = (model.predict_proba(X)[:, 1] >= threshold).astype(int)
+    else:
+        X = torch.tensor(X, dtype=torch.float32)
+        proba = prediction_method(model, X)
+        y_preds = (proba >= threshold).astype(int)
+
+    y_true = np.array(y_true)       # numpy array
+
 
     # calculate harmonic mean of f1-scores of both classes (sense small values which show weak classification angles of the model)
-    report_dict = classification_report(y_true, y_pred, output_dict=True)    # get results in dict
+    report_dict = classification_report(y_true, y_preds, output_dict=True)    # get results in dict
     report_dict['hmean'] = hmean([report_dict['1']['f1-score'], report_dict['0']['f1-score']])
 
     return report_dict     # return harmonic mean & report
 
 
-def avg_pr_fb_score(model, X, y_true, beta=1, show_plot=False):
+def avg_pr_fb_score(model, X, y_true, *,
+                    prediction_method=None,beta=1, show_plot=False):
     '''
     calculate avg precision and plot precision recall curve with the best threshold
-    :param model: trianed model
+    :param model: trained model
     :param X: input
     :param y_true: target
     :param beta: f(beat)score
     :param show_plot: if True it'll show the plot
+    :param prediction_method: callable function for customized prediction process (torch.nn models)
     :return result: dic with metrics scores
     '''
 
-    y_proba = model.predict_proba(X)[:, 1]      # get predicted probabilities
+    if prediction_method is None:
+        y_proba = model.predict_proba(X)[:, 1]      # get predicted probabilities
+    else:
+        # transform to tensor float32
+        X = torch.tensor(X, dtype=torch.float32)
+        y_proba = prediction_method(model, X)       # returned numpy array of probabilities
+
+    y_true = np.array(y_true)       # numpy array dtype
+
     precisions, recalls, thresholds = precision_recall_curve(y_true, y_proba)      # precisions, recalls & thresholds
 
     # get our best_threshold(respect to class 1) and f-beta score for class 1
