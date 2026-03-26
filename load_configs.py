@@ -2,7 +2,7 @@ import yaml
 import os
 
 class Config:
-    def __init__(self, path='configurations.yaml'):
+    def __init__(self, path='configs.yml'):
         with open(path, 'r') as f:
             data = yaml.safe_load(f)
 
@@ -23,7 +23,6 @@ class Config:
             self.DATASET['prepared']['dir'],
             self.DATASET['prepared']['train']['dir'],
             self.DATASET['prepared']['val']['dir'],
-            self.DATASET['prepared']['train_val']['dir'],
             self.DATASET['prepared']['test']['dir'],
             self.DATASET['sampled']['dir'],
             self.DATASET['sampled']['rus']['dir'],
@@ -31,6 +30,16 @@ class Config:
             self.DATASET['sampled']['smote']['dir'],
             self.DATASET['sampled']['smoteenn']['dir'],
             self.DATASET['sampled']['smotetomek']['dir'],
+            self.DATASET['sampled']['rus']['train']['dir'],
+            self.DATASET['sampled']['enn']['train']['dir'],
+            self.DATASET['sampled']['smote']['train']['dir'],
+            self.DATASET['sampled']['smoteenn']['train']['dir'],
+            self.DATASET['sampled']['smotetomek']['train']['dir'],
+            self.DATASET['sampled']['rus']['val']['dir'],
+            self.DATASET['sampled']['enn']['val']['dir'],
+            self.DATASET['sampled']['smote']['val']['dir'],
+            self.DATASET['sampled']['smoteenn']['val']['dir'],
+            self.DATASET['sampled']['smotetomek']['val']['dir'],
             self.MODELS['dir'],
             self.MODELS['logistic_regression']['dir'],
             self.MODELS['logistic_regression']['sample']['none']['dir'],
