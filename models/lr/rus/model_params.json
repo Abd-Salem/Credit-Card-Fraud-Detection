@@ -1,0 +1,10 @@
+{
+    "model__C": "10",
+    "model__class_weight": "{1: 10, 0: 1}",
+    "model__max_iter": "100",
+    "model__penalty": "l2",
+    "model__solver": "newton-cg",
+    "scaler": "StandardScaler()",
+    "sample_technique": "rus",
+    "best_score": 0.9874281208271581
+}
