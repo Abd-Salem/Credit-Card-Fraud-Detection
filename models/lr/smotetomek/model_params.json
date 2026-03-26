@@ -1,8 +1,0 @@
-{
-    "model__class_weight": "{1: 5, 0: 1}",
-    "model__max_iter": "100",
-    "model__solver": "lbfgs",
-    "scaler": "StandardScaler()",
-    "best_score": 0.998493896363399,
-    "sample_technique": "smotetomek"
-}

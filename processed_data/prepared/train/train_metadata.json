@@ -1,5 +1,5 @@
 {
-    "input_cols_names": [
+    "cols_names": [
         "Time",
         "V1",
         "V2",
