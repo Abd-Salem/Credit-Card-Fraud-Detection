@@ -18,10 +18,6 @@ dataset:
       dir: 'processed_data/prepared/val'
       data: 'processed_data/prepared/val/val.npz'
       metadata: 'processed_data/prepared/val/val_metadata.json'
-    train_val:
-      dir: 'processed_data/prepared/train+val'
-      data: 'processed_data/prepared/train+val/train+val.npz'
-      metadata: 'processed_data/prepared/train+val/train+val_metadata.json'
     test:
       dir: 'processed_data/prepared/test'
       data: 'processed_data/prepared/test/test.npz'
@@ -31,34 +27,55 @@ dataset:
     dir: 'processed_data/sampled'
     rus:
       dir: 'processed_data/sampled/rus'
-      train: 'processed_data/sampled/rus/train.npz'
-      train_metadata: 'processed_data/sampled/rus/train_metadata.json'
-      train_val: 'processed_data/sampled/rus/train+val.npz'
-      train_val_metadata: 'processed_data/sampled/rus/train+val_metadata.json'
+      train:
+        dir: 'processed_data/sampled/rus/train'
+        data: 'processed_data/sampled/rus/train/train.npz'
+        metadata: 'processed_data/sampled/rus/train/train.json'
+      val:
+        dir: 'processed_data/sampled/rus/val'
+        data: 'processed_data/sampled/rus/val/train.npz'
+        metadata: 'processed_data/sampled/rus/val/train.json'
+
     enn:
       dir: 'processed_data/sampled/enn'
-      train: 'processed_data/sampled/enn/train.npz'
-      train_metadata: 'processed_data/sampled/enn/train_metadata.json'
-      train_val: 'processed_data/sampled/enn/train+val.npz'
-      train_val_metadata: 'processed_data/sampled/enn/train+val_metadata.json'
+      train:
+        dir: 'processed_data/sampled/enn/train'
+        data: 'processed_data/sampled/enn/train/train.npz'
+        metadata: 'processed_data/sampled/enn/train/train.json'
+      val:
+        dir: 'processed_data/sampled/enn/val'
+        data: 'processed_data/sampled/enn/val/train.npz'
+        metadata: 'processed_data/sampled/enn/val/train.json'
     smote:
       dir: 'processed_data/sampled/smote'
-      train: 'processed_data/sampled/smote/train.npz'
-      train_metadata: 'processed_data/sampled/smote/train_metadata.json'
-      train_val: 'processed_data/sampled/smote/train+val.nzp'
-      train_val_metadata: 'processed_data/sampled/smote/train+val_metadata.json'
+      train:
+        dir: 'processed_data/sampled/smote/train'
+        data: 'processed_data/sampled/smote/train/train.npz'
+        metadata: 'processed_data/sampled/smote/train/train.json'
+      val:
+        dir: 'processed_data/sampled/smote/val'
+        data: 'processed_data/sampled/smote/val/train.npz'
+        metadata: 'processed_data/sampled/smote/val/train.json'
     smoteenn:
       dir: 'processed_data/sampled/smoteenn'
-      train: 'processed_data/sampled/smoteenn/train.npz'
-      train_metadata: 'processed_data/sampled/smoteenn/train_metadata.json'
-      train_val: 'processed_data/sampled/smoteenn/train+val.npz'
-      train_val_metadata: 'processed_data/sampled/smoteenn/train+val_metadata.json'
+      train:
+        dir: 'processed_data/sampled/smoteenn/train'
+        data: 'processed_data/sampled/smoteenn/train/train.npz'
+        metadata: 'processed_data/sampled/smoteenn/train/train.json'
+      val:
+        dir: 'processed_data/sampled/smoteenn/val'
+        data: 'processed_data/sampled/smoteenn/val/train.npz'
+        metadata: 'processed_data/sampled/smoteenn/val/train.json'
     smotetomek:
       dir: 'processed_data/sampled/smotetomek'
-      train: 'processed_data/sampled/smotetomek/train.npz'
-      train_metadata: 'processed_data/sampled/smotetomek/train_metadata.json'
-      train_val: 'processed_data/sampled/smotetomek/train+val.npz'
-      train_val_metadata: 'processed_data/sampled/smotetomek/train+val_metadata.json'
+      train:
+        dir: 'processed_data/sampled/smotetomek/train'
+        data: 'processed_data/sampled/smotetomek/train/train.npz'
+        metadata: 'processed_data/sampled/smotetomek/train/train.json'
+      val:
+        dir: 'processed_data/sampled/smotetomek/val'
+        data: 'processed_data/sampled/smotetomek/val/train.npz'
+        metadata: 'processed_data/sampled/smotetomek/val/train.json'
 
 
 
@@ -100,37 +117,31 @@ models:
       none:
         dir: 'models/lr/none'
         model: 'models/lr/none/model.pkl'
-        scaler: 'models/lr/none/scaler.pkl'
         metadata: 'models/lr/none/model_params.json'
         eval: 'models/lr/none/model_eval_scores.json'
       rus:
         dir: 'models/lr/rus'
         model: 'models/lr/rus/model.pkl'
-        scaler: 'models/lr/rus/scaler.pkl'
         metadata: 'models/lr/rus/model_params.json'
         eval: 'models/lr/rus/model_eval_scores.json'
       enn:
         dir: 'models/lr/enn'
         model: 'models/lr/enn/model.pkl'
-        scaler: 'models/lr/enn/scaler.pkl'
         metadata: 'models/lr/enn/model_params.json'
         eval: 'models/lr/enn/model_eval_scores.json'
       smote:
         dir: 'models/lr/smote'
         model: 'models/lr/smote/model.pkl'
-        scaler: 'models/lr/smote/scaler.pkl'
         metadata: 'models/lr/smote/model_params.json'
         eval: 'models/lr/smote/model_eval_scores.json'
       smoteenn:
         dir: 'models/lr/smoteenn'
         model: 'models/lr/smoteenn/model.pkl'
-        scaler: 'models/lr/smoteenn/scaler.pkl'
         metadata: 'models/lr/smoteenn/model_params.json'
         eval: 'models/lr/smoteenn/model_eval_scores.json'
       smotetomek:
         dir: 'models/lr/smotetomek'
         model: 'models/lr/smotetomek/model.pkl'
-        scaler: 'models/lr/smotetomek/scaler.pkl'
         metadata: 'models/lr/smotetomek/model_params.json'
         eval: 'models/lr/smotetomek/model_eval_scores.json'
 
@@ -138,6 +149,8 @@ models:
       solver: ['lbfgs', 'newton-cg', 'liblinear']
       max_iter: [100, 500, 800, 1000, 2000]
       class_weight: ['balanced', {1: 5, 0: 1}, {1: 10, 0: 1}, {1: 20, 0: 1}]
+      penalty: ['l2']
+      lamda: [0.01, 0.1, 1, 10]
 
 
   random_forest:
@@ -146,37 +159,31 @@ models:
       none:
         dir: 'models/rf/none'
         model: 'models/rf/none/model.pkl'
-        scaler: 'models/rf/none/scaler.pkl'
         metadata: 'models/rf/none/model_params.json'
         eval: 'models/rf/none/model_eval_scores.json'
       rus:
         dir: 'models/rf/rus'
         model: 'models/rf/rus/model.pkl'
-        scaler: 'models/rf/rus/scaler.pkl'
         metadata: 'models/rf/rus/model_params.json'
         eval: 'models/rf/rus/model_eval_scores.json'
       enn:
         dir: 'models/rf/enn'
         model: 'models/rf/enn/model.pkl'
-        scaler: 'models/rf/enn/scaler.pkl'
         metadata: 'models/rf/enn/model_params.json'
         eval: 'models/rf/enn/model_eval_scores.json'
       smote:
         dir: 'models/rf/smote'
         model: 'models/rf/smote/model.pkl'
-        scaler: 'models/rf/smote/scaler.pkl'
         metadata: 'models/rf/smote/model_params.json'
         eval: 'models/rf/smote/model_eval_scores.json'
       smoteenn:
         dir: 'models/rf/smoteenn'
         model: 'models/rf/smoteenn/model.pkl'
-        scaler: 'models/rf/smoteenn/scaler.pkl'
         metadata: 'models/rf/smoteenn/model_params.json'
         eval: 'models/rf/smoteenn/model_eval_scores.json'
       smotetomek:
         dir: 'models/rf/smotetomek'
         model: 'models/rf/smotetomek/model.pkl'
-        scaler: 'models/rf/smotetomek/scaler.pkl'
         metadata: 'models/rf/smotetomek/model_params.json'
         eval: 'models/rf/smotetomek/model_eval_scores.json'
 
@@ -194,37 +201,31 @@ models:
       none:
         dir: 'models/nn/none'
         model: 'models/nn/none/model.pkl'
-        scaler: 'models/nn/none/scaler.pkl'
         metadata: 'models/nn/none/model_params.json'
         eval: 'models/nn/none/model_eval_scores.json'
       rus:
         dir: 'models/nn/rus'
         model: 'models/nn/rus/model.pkl'
-        scaler: 'models/nn/rus/scaler.pkl'
         metadata: 'models/nn/rus/model_params.json'
         eval: 'models/nn/rus/model_eval_scores.json'
       enn:
         dir: 'models/nn/enn'
         model: 'models/nn/enn/model.pkl'
-        scaler: 'models/nn/enn/scaler.pkl'
         metadata: 'models/nn/enn/model_params.json'
         eval: 'models/nn/enn/model_eval_scores.json'
       smote:
         dir: 'models/nn/smote'
         model: 'models/nn/smote/model.pkl'
-        scaler: 'models/nn/smote/scaler.pkl'
         metadata: 'models/nn/smote/model_params.json'
         eval: 'models/nn/smote/model_eval_scores.json'
       smoteenn:
         dir: 'models/nn/smoteenn'
         model: 'models/nn/smoteenn/model.pkl'
-        scaler: 'models/nn/smoteenn/scaler.pkl'
         metadata: 'models/nn/smoteenn/model_params.json'
         eval: 'models/nn/smoteenn/model_eval_scores.json'
       smotetomek:
         dir: 'models/nn/smotetomek'
         model: 'models/nn/smotetomek/model.pkl'
-        scaler: 'models/nn/smotetomek/scaler.pkl'
         metadata: 'models/nn/smotetomek/model_params.json'
         eval: 'models/nn/smotetomek/model_eval_scores.json'
 
@@ -248,37 +249,37 @@ models:
       none:
         dir: 'models/nn-fl/none'
         model: 'models/nn-fl/none/model.pkl'
-        scaler: 'models/nn-fl/none/scaler.pkl'
+        scaler: 'model/nn-fl/none/model.pkl'
         metadata: 'models/nn-fl/none/model_params.json'
         eval: 'models/nn-fl/none/model_eval_scores.json'
       rus:
         dir: 'models/nn-fl/rus'
         model: 'models/nn-fl/rus/model.pkl'
-        scaler: 'models/nn-fl/rus/scaler.pkl'
+        scaler: 'model/nn-fl/none/model.pkl'
         metadata: 'models/nn-fl/rus/model_params.json'
         eval: 'models/nn-fl/rus/model_eval_scores.json'
       enn:
         dir: 'models/nn-fl/enn'
         model: 'models/nn-fl/enn/model.pkl'
-        scaler: 'models/nn-fl/enn/scaler.pkl'
+        scaler: 'model/nn-fl/none/model.pkl'
         metadata: 'models/nn-fl/enn/model_params.json'
         eval: 'models/nn-fl/enn/model_eval_scores.json'
       smote:
         dir: 'models/nn-fl/smote'
         model: 'models/nn-fl/smote/model.pkl'
-        scaler: 'models/nn-fl/smote/scaler.pkl'
+        scaler: 'model/nn-fl/none/model.pkl'
         metadata: 'models/nn-fl/smote/model_params.json'
         eval: 'models/nn-fl/smote/model_eval_scores.json'
       smoteenn:
         dir: 'models/nn-fl/smoteenn'
         model: 'models/nn-fl/smoteenn/model.pkl'
-        scaler: 'models/nn-fl/smoteenn/scaler.pkl'
+        scaler: 'model/nn-fl/none/model.pkl'
         metadata: 'models/nn-fl/smoteenn/model_params.json'
         eval: 'models/nn-fl/smoteenn/model_eval_scores.json'
       smotetomek:
         dir: 'models/nn-fl/smotetomek'
         model: 'models/nn-fl/smotetomek/model.pkl'
-        scaler: 'models/nn-fl/smotetomek/scaler.pkl'
+        scaler: 'model/nn-fl/none/model.pkl'
         metadata: 'models/nn-fl/smotetomek/model_params.json'
         eval: 'models/nn-fl/smotetomek/model_eval_scores.json'
 
@@ -286,8 +287,8 @@ models:
       alpha: 0.25
       gamma: 2
       hid_lays: [ 128, 64 ]
-      epochs : 50
-      patience: 10
+      epochs : 1000
+      patience: 40
       optimizer:
         type: 'adam'
         lr: 0.001
@@ -299,37 +300,31 @@ models:
       none:
         dir: 'models/voting/none'
         model: 'models/voting/none/model.pkl'
-        scaler: 'models/voting/none/scaler.pkl'
         metadata: 'models/voting/none/model_params.json'
         eval: 'models/voting/none/model_eval_scores.json'
       rus:
         dir: 'models/voting/rus'
         model: 'models/voting/rus/model.pkl'
-        scaler: 'models/voting/rus/scaler.pkl'
         metadata: 'models/voting/rus/model_params.json'
         eval: 'models/voting/rus/model_eval_scores.json'
       enn:
         dir: 'models/voting/enn'
         model: 'models/voting/enn/model.pkl'
-        scaler: 'models/voting/enn/scaler.pkl'
         metadata: 'models/voting/enn/model_params.json'
         eval: 'models/voting/enn/model_eval_scores.json'
       smote:
         dir: 'models/voting/smote'
         model: 'models/voting/smote/model.pkl'
-        scaler: 'models/voting/smote/scaler.pkl'
         metadata: 'models/voting/smote/model_params.json'
         eval: 'models/voting/smote/model_eval_scores.json'
       smoteenn:
         dir: 'models/voting/smoteenn'
         model: 'models/voting/smoteenn/model.pkl'
-        scaler: 'models/voting/smoteenn/scaler.pkl'
         metadata: 'models/voting/smoteenn/model_params.json'
         eval: 'models/voting/smoteenn/model_eval_scores.json'
       smotetomek:
         dir: 'models/voting/smotetomek'
         model: 'models/voting/smotetomek/model.pkl'
-        scaler: 'models/voting/smotetome/scaler.pkl'
         metadata: 'models/voting/smotetomek/model_params.json'
         eval: 'models/voting/smotetomek/model_eval_scores.json'
 
