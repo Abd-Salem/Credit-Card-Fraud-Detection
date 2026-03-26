@@ -1,101 +1,81 @@
 import numpy as np
-import pandas as pd
 import argparse
 import json, joblib
+import pandas as pd
 from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
 from credit_fraud_utils_eval import avg_pr_fb_score, model_eval_report
 
 
 
-def get_processed_train_data(sample_technique:str='none',
-                             train_path:str|None=None, train_meta_path:str|None=None):
+def get_processed_data(data_path:str|None=None, dtype='np', meta_path:str|None=None):
     '''
-    get saved processed data for training
-    :param sample_technique: get data according to applied technique
-    :param train_path: file path to train dataset
-    :param train_meta_path: file path to train metadata
-    :return x_train: input
-    :return t_train: ground truth
+    load prepared or prepared and sampled data (train, val, test)
+    :param data_path: path of file
+    :param dtype: indicate the datatype of returned data (df , np )
+    :param meta_path: path to metadata to get columns names saved when data prepared
+    :return: X, t ( input & target )
     '''
+    data = np.load(data_path)
+    X, t = data['x'], data['y']
 
-    if sample_technique == 'none':
-        with open(train_meta_path, 'r') as f:
-            metadata = json.load(f)
-        cols_names = metadata['input_cols_names']
+    if dtype == 'df':
+        with open(meta_path, 'r') as f:
+            meta = json.load(f)
+        cols_names = meta['cols_names']
+        X, t = pd.DataFrame(X, columns=cols_names), pd.Series(t)
 
-        data = np.load(train_path)
-        x_train, t_train = pd.DataFrame(data['x_prepared'], columns=cols_names), pd.Series(data['y_prepared'])
-
-    else:
-        with open(train_meta_path, 'r') as f:
-            metadata = json.load(f)
-        cols_names = metadata['input_cols_names']
-        data = np.load(train_path)
-        x_train, t_train = pd.DataFrame(data['x_sampled'], columns=cols_names), pd.Series(data['y_sampled'])
-
-    return x_train, t_train
+    return X, t
 
 
-def get_processed_val_data(val_path:str='', metadata_path:str=''):
+def get_scaling_method(scalers_names:list=['standard']):
     '''
-    get saved processed data for evaluation
-    :param val_path: file path of validation dataset
-    :param metadata_path: file path of metadata of validation dataset
-    :return x_val: input data
-    :return t_val: ground truth
+    return the intended scalers inside configs
+    :param scalers_names: scaler names
     '''
-
-    # get metadata to get columns names
-    with open(metadata_path, 'r') as f:
-        metadata = json.load(f)
-    cols_names = metadata['input_cols_names']
-
-    # load validation data for evaluation
-    val_data = np.load(val_path)
-    x_val, t_val = pd.DataFrame(val_data['x_prepared'], columns=cols_names), pd.Series(val_data['y_prepared'])
-
-    return x_val, t_val
-
-
-def get_preprocessing_methods(methods:list = ['standard']):
-    '''
-    get scalers for preprocessing step (tuning on them)
-    :return: dict of scalers according to configurations
-    '''
-    # scalers options
     scalers = {
-        'standard' : StandardScaler(),
-        'robust'   : RobustScaler(),
-        'minmax'   : MinMaxScaler()
+        'standard': StandardScaler(),
+        'robust':   RobustScaler(),
+        'minmax':   MinMaxScaler(),
     }
-    return {scaler:scalers[scaler] for scaler in methods}
+
+    # if scalers_names not in list(scalers.keys()):
+    #     raise ValueError(
+    #         f"Unknown scaler '{scalers_names}'. Choose from {list(scalers)}"
+    #     )
+
+    return [scalers[scaler] for scaler in scalers_names]        # return scalers
 
 
-def model_eval(model_path:str|None=None, model_eval_path:str|None=None,
-               val_path:str|None=None, meta_val_path:str|None=None,
-                    show_plot:bool=False,beta:int=2):
+def model_eval(val_data_path:str=None, val_meta_path:str=None,model_path:str|None=None ,model_eval_path:str|None=None,
+               show_plot:bool=False,beta:int=2, prediction_method=None, scaler_path=None):
     '''
+    :param val_data_path: path to validation dataset
+    :param val_meta_path: path to metadata saved for validation dataset ( columns names )
     :param model_path: trained model path
     :param model_eval_path: evaluation path for metrics scores (.json)
-    :param val_path: file path of validation dataset
-    :param meta_val_path: file path of validation metadata
     :param show_plot: plot precision recall curve with the best threshold
     :param beta: fscore (1, 2, 0.5)
+    :param prediction_method: callable function for customized prediction process (torch.nn models)
+    :param scaler_path: for trained neural network model with focal loss (if prediction_method is True)
     :return: None
     '''
 
     # get best model
     model = joblib.load(model_path)
 
-    # get validation dataset
-    x_val, t_val = get_processed_val_data(val_path=val_path, metadata_path=meta_val_path)
+    x_val, t_val = get_processed_data(data_path=val_data_path, dtype='df', meta_path=val_meta_path)
+
+    if not prediction_method is None:
+        scaler = joblib.load(scaler_path)
+        x_val = scaler.transform(x_val)
 
     # evaluate using avg precision score and f(beta)score and show plot with best threshold
-    result = avg_pr_fb_score(model, x_val, t_val, beta=beta, show_plot=show_plot)
+    result = avg_pr_fb_score(model, x_val, t_val, beta=beta, show_plot=show_plot, prediction_method=prediction_method)
 
     # get classification report by using the best threshold with respect to the highest f(beta)score
-    report_1 = model_eval_report(model, x_val, t_val, threshold=result[f'best_threshold(f{beta}-score)'])
-    report_2 = model_eval_report(model, x_val, t_val, threshold=0.5)
+    report_1 = model_eval_report(model, x_val, t_val, threshold=result[f'best_threshold(f{beta}-score)'],
+                                 prediction_method=prediction_method)
+    report_2 = model_eval_report(model, x_val, t_val, threshold=0.5, prediction_method=prediction_method)
 
     # model parameters and eval scores
     metadata = {
@@ -109,12 +89,12 @@ def model_eval(model_path:str|None=None, model_eval_path:str|None=None,
         json.dump(metadata, f, indent=4)
 
 
-def save_best_model(model, metadata, model_path:str|None=None, metadata_path:str|None=None):
+def save_best_model(model, metadata, model_path:str|None=None,metadata_path:str|None=None):
     '''
     save best trained model and it's parameters as metadat
-    :param model: best model
+    :param model: the best model
+    :param metadata: model's parameters
     :param model_path: where model will be saved
-    :param metadata: model parameters
     :param metadata_path: where metadata will be saved
     :return: None
     '''
@@ -137,7 +117,7 @@ def parse_arg():
     parser = argparse.ArgumentParser(description='Fraud-Detection-Pipeline')
 
     # add config argument for path file of configurations
-    parser.add_argument('-c','--config', type=str, default='configurations.yaml'
+    parser.add_argument('-c','--config', type=str, default='configs.yml'
                         ,help='configuration path (.yaml)')
 
     # add sampling argument for data sampling technique
@@ -149,11 +129,12 @@ def parse_arg():
 
     # add algorithm argument for model algorithm
     parser.add_argument('-alg', '--algorithm', type=str,
-                        choices=['lr', 'rf', 'nn', 'vc'], default='lr',
+                        choices=['lr', 'rf', 'nn','nn_fl', 'vc'], default='lr',
                         help='model algorithm {'
                              'lr: linear regression / '
                              'rf: random forest / '
                              'nn: neural network / '
+                             'nn_fl: neural network with Focal Loss  /  '
                              'vc: voting classifier'
                              '}')
 
