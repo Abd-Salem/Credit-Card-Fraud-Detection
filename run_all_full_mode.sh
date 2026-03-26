@@ -23,9 +23,9 @@ python main.py -s enn         -alg nn
 python main.py -s smote       -alg nn
 python main.py -s smoteenn    -alg nn
 python main.py -s smotetomek  -alg nn
-#
-#python main.py -s rus        -alg nn_fl
-#python main.py -s enn        -alg nn_fl
-#python main.py -s smote      -alg nn_fl
-#python main.py -s smoteenn   -alg nn_fl
-#python main.py -s smotetomek -alg nn_fl
+
+python main.py -s rus        -alg nn_fl
+python main.py -s enn        -alg nn_fl
+python main.py -s smote      -alg nn_fl
+python main.py -s smoteenn   -alg nn_fl
+python main.py -s smotetomek -alg nn_fl
