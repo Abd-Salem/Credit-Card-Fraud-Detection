@@ -37,17 +37,15 @@ def get_scaling_method(scalers_names:list=['standard']):
         'robust':   RobustScaler(),
         'minmax':   MinMaxScaler(),
     }
-
-    # if scalers_names not in list(scalers.keys()):
-    #     raise ValueError(
-    #         f"Unknown scaler '{scalers_names}'. Choose from {list(scalers)}"
-    #     )
+    for name in scalers_names:
+        if not name in scalers.keys():
+            raise ValueError("Invalid scaler name, value must be in list ['standard', 'robust', 'minmax']")
 
     return [scalers[scaler] for scaler in scalers_names]        # return scalers
 
 
 def model_eval(val_data_path:str=None, val_meta_path:str=None,model_path:str|None=None ,model_eval_path:str|None=None,
-               show_plot:bool=False,beta:int=2, prediction_method=None, scaler_path=None):
+               show_plot:bool=False,beta:int=2):
     '''
     :param val_data_path: path to validation dataset
     :param val_meta_path: path to metadata saved for validation dataset ( columns names )
@@ -55,8 +53,6 @@ def model_eval(val_data_path:str=None, val_meta_path:str=None,model_path:str|Non
     :param model_eval_path: evaluation path for metrics scores (.json)
     :param show_plot: plot precision recall curve with the best threshold
     :param beta: fscore (1, 2, 0.5)
-    :param prediction_method: callable function for customized prediction process (torch.nn models)
-    :param scaler_path: for trained neural network model with focal loss (if prediction_method is True)
     :return: None
     '''
 
@@ -65,17 +61,12 @@ def model_eval(val_data_path:str=None, val_meta_path:str=None,model_path:str|Non
 
     x_val, t_val = get_processed_data(data_path=val_data_path, dtype='df', meta_path=val_meta_path)
 
-    if not prediction_method is None:
-        scaler = joblib.load(scaler_path)
-        x_val = scaler.transform(x_val)
-
     # evaluate using avg precision score and f(beta)score and show plot with best threshold
-    result = avg_pr_fb_score(model, x_val, t_val, beta=beta, show_plot=show_plot, prediction_method=prediction_method)
+    result = avg_pr_fb_score(model, x_val, t_val, beta=beta, show_plot=show_plot)
 
     # get classification report by using the best threshold with respect to the highest f(beta)score
-    report_1 = model_eval_report(model, x_val, t_val, threshold=result[f'best_threshold(f{beta}-score)'],
-                                 prediction_method=prediction_method)
-    report_2 = model_eval_report(model, x_val, t_val, threshold=0.5, prediction_method=prediction_method)
+    report_1 = model_eval_report(model, x_val, t_val, threshold=result[f'best_threshold(f{beta}-score)'])
+    report_2 = model_eval_report(model, x_val, t_val, threshold=0.5)
 
     # model parameters and eval scores
     metadata = {
