@@ -6,27 +6,19 @@ from sklearn.metrics import precision_recall_curve, classification_report, avera
 
 
 def model_eval_report(model, X, y_true, *
-                      ,threshold=0.5
-                      ,prediction_method=None):
+                      ,threshold=0.5):
     '''
     get classification report with customized threshold
     :param model: trained model
     :param X: input
     :param y_true: target
     :param threshold: more control (default=0.5)
-    :param prediction_method: callable function for customized prediction process (torch.nn models)
     :return:
     '''
 
     # get predictions with specific threshold
-    if prediction_method is None:
-        y_preds = (model.predict_proba(X)[:, 1] >= threshold).astype(int)
-    else:
-        X = torch.tensor(X, dtype=torch.float32)
-        proba = prediction_method(model, X)
-        y_preds = (proba >= threshold).astype(int)
+    y_preds = (model.predict_proba(X)[:, 1] >= threshold).astype(int)
 
-    y_true = np.array(y_true)       # numpy array
 
 
     # calculate harmonic mean of f1-scores of both classes (sense small values which show weak classification angles of the model)
@@ -37,7 +29,7 @@ def model_eval_report(model, X, y_true, *
 
 
 def avg_pr_fb_score(model, X, y_true, *,
-                    prediction_method=None,beta=1, show_plot=False):
+                    beta=1, show_plot=False):
     '''
     calculate avg precision and plot precision recall curve with the best threshold
     :param model: trained model
@@ -45,18 +37,11 @@ def avg_pr_fb_score(model, X, y_true, *,
     :param y_true: target
     :param beta: f(beat)score
     :param show_plot: if True it'll show the plot
-    :param prediction_method: callable function for customized prediction process (torch.nn models)
     :return result: dic with metrics scores
     '''
 
-    if prediction_method is None:
-        y_proba = model.predict_proba(X)[:, 1]      # get predicted probabilities
-    else:
-        # transform to tensor float32
-        X = torch.tensor(X, dtype=torch.float32)
-        y_proba = prediction_method(model, X)       # returned numpy array of probabilities
 
-    y_true = np.array(y_true)       # numpy array dtype
+    y_proba = model.predict_proba(X)[:, 1]      # get predicted probabilities
 
     precisions, recalls, thresholds = precision_recall_curve(y_true, y_proba)      # precisions, recalls & thresholds
 
