@@ -284,15 +284,21 @@ models:
         eval: 'models/nn-fl/smotetomek/model_eval_scores.json'
 
     params:
-      alpha: 0.25
-      gamma: 2
-      hid_lays: [ 128, 64 ]
-      epochs : 1000
-      patience: 40
+      alpha: [0.25]
+      gamma: [2]
+      hidden_layers:
+      - [32]
+      - [64]
+      - [64, 32]
+      - [128, 64]
+      - [128, 64, 32]
+      activation: ['relu', 'tanh']
+      epochs : [200, 400, 600, 800]
+      patience: [50]
       optimizer:
-        type: 'adam'
-        lr: 0.001
-        weight_decay: 0.0001
+        type: ['adam', 'adamw']
+        lr: [0.001, 0.01, 0.0001]
+        weight_decay: [0.0001, 0.001, 0.01]
 
   voting_classifier:
     dir: 'models/voting'
