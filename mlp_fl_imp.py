@@ -26,18 +26,21 @@ class MLP_FL(nn.Module):
     '''
     neural network class implementation
     '''
-    def __init__(self, input_dim:int, hidden_layers:tuple, dropout:float|int=0.2 ,* ,
-                 epochs=100,patience=30,train_val_size=0.2,
-                 optimizer:str='adam',optimizer_lr:float|int=0.001, optimizer_weight_decay:float|int=0.0001 ,
-                 focal_loss_alpha:float|int=0.25, focal_loss_gamma:int=2):
+    def __init__(self, input_dim:int, hidden_layers:tuple=(100,), activation='relu' , *,
+                 dropout:float=0.2, epochs:int=100, patience:int=50, train_val_size:float=0.2,
+                 optimizer:str='adam', optimizer_lr:float|int=0.001, optimizer_weight_decay:float|int=0.0001 ,
+                 focal_loss_alpha:float|int=0.25, focal_loss_gamma:int=2, random_state=42,stratify=None):
         super().__init__()      # init parent
 
         self.input_dim = input_dim
         self.hidden_layers = hidden_layers
+        self.activation = activation
         self.dropout = dropout
         self.epochs = epochs
         self.patience = patience
         self.train_val_size = train_val_size
+        self.stratify = stratify
+        self.random_state = random_state
         self.optimizer = optimizer
         self.optimizer_lr = optimizer_lr
         self.optimizer_weight_decay = optimizer_weight_decay
@@ -58,13 +61,18 @@ class MLP_FL(nn.Module):
         :return: network
         '''
         # create the network
+
+        active_fun = nn.ReLU()
+        if self.activation == 'tanh':
+            active_fun = nn.Tanh()
+
         in_dim = self.input_dim
         layers = []
         for h in self.hidden_layers:
             layers.extend([
                 nn.Linear(in_dim, h),
                 nn.BatchNorm1d(h),
-                nn.ReLU(),
+                active_fun,
                 nn.Dropout(self.dropout)
             ])
             in_dim = h
@@ -76,11 +84,12 @@ class MLP_FL(nn.Module):
         initiate optimizer of training
         :return: None
         '''
-        if self.optimizer == 'adam':
-            return torch.optim.Adam(self.parameters(), lr=self.optimizer_lr, weight_decay=self.optimizer_weight_decay)
-        elif self.optimizer == 'adamw':
+
+        if self.optimizer == 'adamw':
             return torch.optim.AdamW(self.parameters(), lr=self.optimizer_lr, weight_decay=self.optimizer_weight_decay)
-        return None
+
+        # return adam as default if not adamw
+        return torch.optim.Adam(self.parameters(), lr=self.optimizer_lr, weight_decay=self.optimizer_weight_decay)
 
     def forward(self, x):
         return self.net(x).squeeze(-1)
@@ -145,11 +154,12 @@ class MLP_FL(nn.Module):
         '''
 
        # split data and normalize dtype
-        x_tr, x_val, t_tr, t_val = train_test_split(X,t,test_size=self.train_val_size)
-        x_tr = torch.tensor(x_tr, dtype=torch.float32)
-        t_tr = torch.tensor(t_tr, dtype=torch.float32)
-        x_val = torch.tensor(x_val, dtype=torch.float32)
-        t_val = torch.tensor(t_val, dtype=torch.float32)
+        x_tr, x_val, t_tr, t_val = train_test_split(X,t,test_size=self.train_val_size,
+                                                    stratify=self.stratify, random_state=self.random_state)
+        x_tr = torch.tensor(np.array(x_tr), dtype=torch.float32)
+        t_tr = torch.tensor(np.array(t_tr), dtype=torch.float32)
+        x_val = torch.tensor(np.array(x_val), dtype=torch.float32)
+        t_val = torch.tensor(np.array(t_val), dtype=torch.float32)
 
         self.history['train_loss'] ,self.history['val_loss'] = [], []
 
