@@ -1,12 +1,13 @@
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.model_selection import StratifiedKFold, GridSearchCV, RandomizedSearchCV, cross_val_score, train_test_split
-from imblearn.pipeline import  Pipeline
+from sklearn.model_selection import StratifiedKFold, GridSearchCV, RandomizedSearchCV, cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import  Pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from collections import Counter
 from credit_fraud_utils_helper import save_best_model, get_scaling_method, get_processed_data
-from mlp_fl_imp import MLP_FL
+from focal_loss_mlp import MLP_FL
 import json, joblib
 
 
@@ -303,14 +304,22 @@ def neural_network_fl(sample_technique:str='none', config=None):
     }
 
     rand_grid = RandomizedSearchCV(pipeline,param_distributions=params, cv=skf ,scoring=scoring, n_jobs=1)
+
+    from sklearn.utils.estimator_checks import check_is_fitted
+    from sklearn.base import is_classifier
+
+    print(is_classifier(rand_grid))  # should print True
+
     rand_grid.fit(x_train, t_train)
+
+    best_params = {k: str(v) for k, v in rand_grid.best_params_.items()}
 
     others = {
         'sample_technieque' : sample_technique,
         'best_score'        : rand_grid.best_score_
     }
     nn_fl_meta = {
-        **rand_grid.best_params_,
+        **best_params,
         **others
     }
 
@@ -321,6 +330,76 @@ def neural_network_fl(sample_technique:str='none', config=None):
                     metadata_path=model_meta_save_path)
 
 
+def knn_classifier(sample_technique:str='none', config=None):
+    '''
+    Train knn classifier model
+    :param sample_technique: which data processed with
+    :param config: config loader
+    :return: None
+    '''
+
+    # get configs
+    cv_folds = config.EVALUATION['cv_folds']
+    random_state = config.RANDOM_STATE
+    preprocessing_types = config.PREPROCESSING['scaler']
+    scoring = config.EVALUATION['scoring']
+    k = config.MODELS['knn_classifier']['params']['k']
+    weights = config.MODELS['knn_classifier']['params']['weights']
+    metric = config.MODELS['knn_classifier']['params']['metric']
+    model_save_path = config.MODELS['knn_classifier']['sample'][sample_technique]['model']
+    meta_save_path = config.MODELS['knn_classifier']['sample'][sample_technique]['metadata']
+
+    # get train data according to chosen sample technique
+    if sample_technique == 'none':
+        x_train, t_train = get_processed_data(data_path=config.DATASET['prepared']['train']['data'],
+                                              dtype='df', meta_path=config.DATASET['prepared']['train']['metadata'])
+    else:
+        x_train, t_train = get_processed_data(data_path=config.DATASET['sampled'][sample_technique]['train']['data'],
+                                              dtype='df', meta_path=config.DATASET['sampled'][sample_technique]['train']['metadata'])
+
+    # get scaler methods
+    scalers = get_scaling_method(preprocessing_types)
+
+    # stratified k-fold to preserve dist of data
+    skf = StratifiedKFold(n_splits=cv_folds,random_state=random_state, shuffle=True)
+
+    # create pipeline
+    pipeline = Pipeline([
+        ('scaler', scalers[0]),
+        ('model', KNeighborsClassifier())
+    ])
+
+    # hyper parameters
+    params = {
+        'scaler' : scalers,
+        'model__n_neighbors': k,
+        'model__weights': weights,
+        'model__metric': metric
+    }
+
+
+    # create grid
+    grid = GridSearchCV(pipeline, param_grid=params, cv=skf, scoring=scoring, n_jobs=3)
+
+    # try all fits and tune over parameters
+    grid.fit(x_train, t_train)
+
+    # clean strings no objects
+    best_params = {k: str(v) for k, v in grid.best_params_.items()}
+    others = {
+        'sample_technique': sample_technique,
+        'best_score' : grid.best_score_
+    }
+
+    # dict of model params & score
+    knn_meta = {
+        **best_params,
+        **others
+    }
+    # save best model with it's parameters
+    save_best_model(grid.best_estimator_ , knn_meta,
+                    model_path=model_save_path,
+                    metadata_path=meta_save_path)
 
 
 def voting_classifier(sample_technique:str='none', config=None):
