@@ -120,12 +120,13 @@ def parse_arg():
 
     # add algorithm argument for model algorithm
     parser.add_argument('-alg', '--algorithm', type=str,
-                        choices=['lr', 'rf', 'nn','nn_fl', 'vc'], default='lr',
+                        choices=['lr', 'rf', 'nn','nn_fl','knn', 'vc'], default='lr',
                         help='model algorithm {'
                              'lr: linear regression / '
                              'rf: random forest / '
                              'nn: neural network / '
                              'nn_fl: neural network with Focal Loss  /  '
+                             'knn: knn classifier       /   '
                              'vc: voting classifier'
                              '}')
 
