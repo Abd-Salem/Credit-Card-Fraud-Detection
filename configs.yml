@@ -339,6 +339,46 @@ models:
       estimators: ['lr','rf', 'nn']
       weights: [[1, 1, 1], [1, 2, 3], [1, 3, 2]]
 
+  knn_classifier:
+    dir: 'models/knn'
+    sample:
+      none:
+        dir: 'models/knn/none'
+        model: 'models/knn/none/model.pkl'
+        metadata: 'models/knn/none/model_params.json'
+        eval: 'models/knn/none/model_eval_scores.json'
+      rus:
+        dir: 'models/knn/rus'
+        model: 'models/knn/rus/model.pkl'
+        metadata: 'models/knn/rus/model_params.json'
+        eval: 'models/knn/rus/model_eval_scores.json'
+      enn:
+        dir: 'models/knn/enn'
+        model: 'models/knn/enn/model.pkl'
+        metadata: 'models/knn/enn/model_params.json'
+        eval: 'models/knn/enn/model_eval_scores.json'
+      smote:
+        dir: 'models/knn/smote'
+        model: 'models/knn/smote/model.pkl'
+        metadata: 'models/knn/smote/model_params.json'
+        eval: 'models/knn/smote/model_eval_scores.json'
+      smoteenn:
+        dir: 'models/knn/smoteenn'
+        model: 'models/knn/smoteenn/model.pkl'
+        metadata: 'models/knn/smoteenn/model_params.json'
+        eval: 'models/knn/smoteenn/model_eval_scores.json'
+      smotetomek:
+        dir: 'models/knn/smotetomek'
+        model: 'models/knn/smotetomek/model.pkl'
+        metadata: 'models/knn/smotetomek/model_params.json'
+        eval: 'models/knn/smotetomek/model_eval_scores.json'
+
+    params:
+      k: [3, 5, 7, 9]
+      weights: ['uniform', 'distance']
+      metric: ['manhattan', 'euclidean', 'minkowski']
+
+
 
 ###################################################################
 evaluation:
