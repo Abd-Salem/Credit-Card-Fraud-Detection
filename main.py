@@ -1,5 +1,6 @@
 from credit_fraud_utils_helper import parse_arg, model_eval
-from credit_fraud_train import logistic_regression_model, random_forest_model, neural_network_classifier, neural_network_fl ,voting_classifier
+from credit_fraud_train import logistic_regression_model, random_forest_model, neural_network_classifier, \
+    neural_network_fl, voting_classifier, knn_classifier
 import torch
 import numpy as np
 from load_configs import Config
@@ -12,6 +13,7 @@ def main():
         'rf' : random_forest_model,
         'nn' : neural_network_classifier,
         'nn_fl' : neural_network_fl,
+        'knn': knn_classifier,
         'vc' : voting_classifier
     }
     # evaluation dict models
@@ -20,6 +22,7 @@ def main():
         'rf' : 'random_forest',
         'nn' : 'neural_network',
         'nn_fl' : 'neural_network_fl',
+        'knn': 'knn_classifier',
         'vc' : 'voting_classifier'
     }
 
