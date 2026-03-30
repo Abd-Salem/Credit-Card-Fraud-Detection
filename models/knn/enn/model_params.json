@@ -1,0 +1,8 @@
+{
+    "model__metric": "manhattan",
+    "model__n_neighbors": "9",
+    "model__weights": "distance",
+    "scaler": "StandardScaler()",
+    "sample_technique": "enn",
+    "best_score": 0.8011318437934383
+}
