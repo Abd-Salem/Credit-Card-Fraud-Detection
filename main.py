@@ -62,6 +62,5 @@ def main():
                    show_plot=show_plot, beta=config.EVALUATION['beta'])
 
 
-
 if __name__ == '__main__':
     main()
