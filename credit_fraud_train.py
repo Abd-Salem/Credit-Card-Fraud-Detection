@@ -1,14 +1,13 @@
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.model_selection import StratifiedKFold, GridSearchCV, RandomizedSearchCV, cross_val_score
+from sklearn.model_selection import StratifiedKFold, GridSearchCV, RandomizedSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import  Pipeline
-from sklearn.preprocessing import LabelEncoder, StandardScaler
 from collections import Counter
+import joblib, json
 from credit_fraud_utils_helper import save_best_model, get_scaling_method, get_processed_data
 from focal_loss_mlp import MLP_FL
-import json, joblib
 
 
 def logistic_regression_model(sample_technique:str='none', config=None):
@@ -92,7 +91,6 @@ def logistic_regression_model(sample_technique:str='none', config=None):
                     model_path=model_save_path,
                     metadata_path=meta_save_path)
 
-
 def random_forest_model(sample_technique:str='none', config=None):
     '''
     Train random forest model (tree-based algorithm)
@@ -106,6 +104,7 @@ def random_forest_model(sample_technique:str='none', config=None):
     preprocessing_methods = config.PREPROCESSING['scaler']
     max_depth =  config.MODELS['random_forest']['params']['max_depth']
     n_estimators = config.MODELS['random_forest']['params']['n_estimators']
+    n_iter = config.MODELS['random_forest']['n_iter']
     min_samples_leaf = config.MODELS['random_forest']['params']['min_samples_leaf']
     class_weight = config.MODELS['random_forest']['params']['class_weight']
     scoring = config.EVALUATION['scoring']
@@ -143,7 +142,7 @@ def random_forest_model(sample_technique:str='none', config=None):
     }
 
     rand_grid = RandomizedSearchCV(pipeline, param_distributions=params,
-                        n_iter=config.MODELS['random_forest']['n_iter'],scoring=scoring,
+                        n_iter=n_iter,scoring=scoring,
                               cv=skf, n_jobs=3)
 
     rand_grid.fit(x_train, t_train)           # fit model
@@ -405,72 +404,85 @@ def knn_classifier(sample_technique:str='none', config=None):
 def voting_classifier(sample_technique:str='none', config=None):
     '''
     Train voting classifier model
-    :param x_train: input features
-    :param t_train: target feature
     :param sample_technique: which data processed with
     :param config: config loader
     :return: None
     '''
 
-    # load trained models
-    lr_model = joblib.load(config.MODELS['logistic_regression']['model'])
-    rf_model = joblib.load(config.MODELS['random_forest']['model'])
-    nn_model = joblib.load(config.MODELS['neural_network']['model'])
+    # save paths
+    model_save_path = config.MODELS['voting_classifier']['sample'][sample_technique]['model']
+    model_meta_save_path = config.MODELS['voting_classifier']['sample'][sample_technique]['metadata']
+
+    # get configs
+    n_splits = config.EVALUATION['cv_folds']
+    random_state = config.RANDOM_STATE
+    weights = config.MODELS['voting_classifier']['params']['weights']
+
+
+
+    # get train data according to chosen sample technique
+    if sample_technique == 'none':
+        x_train, t_train = get_processed_data(data_path=config.DATASET['prepared']['train']['data'],
+                                              dtype='df', meta_path=config.DATASET['prepared']['train']['metadata'])
+    else:
+        x_train, t_train = get_processed_data(data_path=config.DATASET['sampled'][sample_technique]['train']['data'],
+                                              dtype='df', meta_path=config.DATASET['sampled'][sample_technique]['train']['metadata'])
+
+
+
+    # best pretrained models on different sample techniques
+    lr_model = joblib.load(config.MODELS['logistic_regression']['sample'][sample_technique]['model'])
+    rf_model = joblib.load(config.MODELS['random_forest']['sample'][sample_technique]['model'])
+    nn_model = joblib.load(config.MODELS['neural_network']['sample'][sample_technique]['model'])
+    knn_model = joblib.load(config.MODELS['knn_classifier']['sample'][sample_technique]['model'])
+
+
+    # preserve the distribution
+    skf = StratifiedKFold(n_splits=n_splits, random_state=random_state, shuffle=True)
 
     # prepare estimators
-    names = config.MODELS['voting_classifier']['params']['estimators']
-    models = [lr_model, rf_model, nn_model]
-    estimators = list(zip(names, models))
-
-    # stratified is a good way to keep class distribution as it is in each fold.
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=config.RANDOM_STATE)
-
-    # initial values
-    best_score = -1
-    best_params = {}
-
-    # loop manually over different parameters to ensure freezing best trained models (no refit)
-    for weights in config.MODELS['voting_classifier']['params']['weights']:
-        voting = VotingClassifier(estimators=estimators, voting=config.MODELS['voting_classifier']['params']['voting']
-                                  , weights=weights)
-
-        # freeze models (no refit)
-        voting.estimators_ = [lr_model, rf_model, nn_model]
-        voting.le_ = LabelEncoder().fit(t_train)
-        voting.classes_ = voting.le_.classes_
-
-        # get scores
-        scores = cross_val_score(voting, x_train, t_train, cv=skf,
-                                 scoring=config.EVALUATION['scoring'], n_jobs=3)
-        # mean score
-        mean_score = scores.mean()
-
-        # get the best one
-        if mean_score > best_score:
-            best_score = mean_score
-            best_params = {'weights': weights, 'voting': config.MODELS['voting_classifier']['params']['voting']}
-
-    # set voting model with best pretrained models
-    voting = VotingClassifier(estimators=estimators, voting=best_params['voting'], weights=best_params['weights'])
-    voting.estimators_ = [lr_model, rf_model, nn_model]
-    voting.le_ = LabelEncoder().fit(t_train)
-    voting.classes_ = voting.le_.classes_
-
-    # get models metadata
-    meta_paths = [
-        config.MODELS['logistic_regression']['sample'][sample_technique]['metadata'],
-        config.MODELS['random_forest']['sample'][sample_technique]['metadata'],
-        config.MODELS['neural_network']['sample'][sample_technique]['metadata']
+    models = [
+        ('lr' , lr_model),
+        ('rf' , rf_model),
+        ('nn' , nn_model),
+        ('knn', knn_model)
     ]
-    # add best parameters
-    voting_meta = [best_params]
-    for path in meta_paths:
-        with open(path,'r') as f:
-            voting_meta.append(json.load(f))
+
+    pipeline = Pipeline([('model', VotingClassifier(estimators=models, voting='soft'))])
+    params = {
+        'model__weights' : weights
+    }
+
+    # create voting model
+    grid = GridSearchCV(pipeline, param_grid=params,cv=skf, scoring='average_precision')
+
+    # fit data
+    grid.fit(x_train, t_train)
+
+    # models metadata
+    with open(config.MODELS['logistic_regression']['sample'][sample_technique]['metadata'], 'r') as f:
+        lr_meta = json.load(f)
+
+    with open(config.MODELS['random_forest']['sample'][sample_technique]['metadata'], 'r') as f:
+        rf_meta = json.load(f)
+
+    with open(config.MODELS['neural_network']['sample'][sample_technique]['metadata'], 'r') as f:
+        nn_meta = json.load(f)
+
+    with open(config.MODELS['knn_classifier']['sample'][sample_technique]['metadata'], 'r') as f:
+        knn_meta = json.load(f)
+
+    # collect all models metadata
+    voting_meta = {
+        'vc' : grid.best_params_,
+        'lr' : lr_meta,
+        'rf' : rf_meta,
+        'nn' : nn_meta,
+        'knn': knn_meta
+    }
 
     # save best model
-    save_best_model(voting,StandardScaler() , voting_meta,
-                    model_path=config.MODELS['voting_classifier']['sample'][sample_technique]['model'],
-                    scaler_path=config.MODELS['voting_classifier']['sample'][sample_technique]['scaler'],
-                    metadata_path=config.MODELS['voting_classifier']['sample'][sample_technique]['metadata'])
+    save_best_model(grid.best_estimator_ , voting_meta,
+                    model_path=model_save_path,
+                    metadata_path=model_meta_save_path)
 
