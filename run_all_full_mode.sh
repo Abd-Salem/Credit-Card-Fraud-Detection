@@ -29,3 +29,15 @@ python main.py -s enn        -alg nn_fl
 python main.py -s smote      -alg nn_fl
 python main.py -s smoteenn   -alg nn_fl
 python main.py -s smotetomek -alg nn_fl
+
+python main.py -s rus        -alg knn
+python main.py -s enn        -alg knn
+python main.py -s smote      -alg knn
+python main.py -s smoteenn   -alg knn
+python main.py -s smotetomek -alg knn
+
+python main.py -s rus        -alg vc
+python main.py -s enn        -alg vc
+python main.py -s smote      -alg vc
+python main.py -s smoteenn   -alg vc
+python main.py -s smotetomek -alg vc
