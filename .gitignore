@@ -9,3 +9,8 @@ split/
 # IDE files
 .idea/*
 __pycache__/*
+
+----------------------
+# pkl files
+models/
+*.pkl
