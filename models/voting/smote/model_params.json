@@ -1,0 +1,40 @@
+{
+    "lr": {
+        "model__C": "10",
+        "model__class_weight": "{1: 5, 0: 1}",
+        "model__max_iter": "100",
+        "model__penalty": "l2",
+        "model__solver": "liblinear",
+        "scaler": "RobustScaler()",
+        "sample_technique": "smote",
+        "best_score": 0.9984667207857282
+    },
+    "rf": {
+        "scaler": "RobustScaler()",
+        "model__n_estimators": "600",
+        "model__min_samples_leaf": "2",
+        "model__max_depth": "20",
+        "model__class_weight": "balanced",
+        "sample_technique": "smote",
+        "best_score": 0.9999976889678338
+    },
+    "nn": {
+        "scaler": "StandardScaler()",
+        "model__max_iter": "400",
+        "model__learning_rate_init": "0.001",
+        "model__hidden_layer_sizes": "(32,)",
+        "model__batch_size": "128",
+        "model__alpha": "0.001",
+        "model__activation": "tanh",
+        "sample_technique": "smote",
+        "best_score": 0.9999737105444348
+    },
+    "knn": {
+        "model__metric": "manhattan",
+        "model__n_neighbors": "9",
+        "model__weights": "uniform",
+        "scaler": "StandardScaler()",
+        "sample_technique": "smote",
+        "best_score": 0.9997069756749131
+    }
+}
