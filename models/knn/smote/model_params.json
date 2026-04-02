@@ -1,8 +1,0 @@
-{
-    "model__metric": "manhattan",
-    "model__n_neighbors": "9",
-    "model__weights": "uniform",
-    "scaler": "StandardScaler()",
-    "sample_technique": "smote",
-    "best_score": 0.9997069756749131
-}
