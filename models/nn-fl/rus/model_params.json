@@ -1,0 +1,14 @@
+{
+    "scaler": "StandardScaler()",
+    "model__patience": "50",
+    "model__optimizer_weight_decay": "0.01",
+    "model__optimizer_lr": "0.01",
+    "model__optimizer": "adam",
+    "model__hidden_layers": "(128, 64, 32)",
+    "model__focal_loss_gamma": "2",
+    "model__focal_loss_alpha": "0.25",
+    "model__epochs": "800",
+    "model__activation": "tanh",
+    "sample_technieque": "rus",
+    "best_score": NaN
+}
