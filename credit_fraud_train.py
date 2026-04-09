@@ -1,14 +1,13 @@
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.model_selection import StratifiedKFold, GridSearchCV, RandomizedSearchCV
+from sklearn.model_selection import StratifiedKFold, GridSearchCV, RandomizedSearchCV, train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import  Pipeline
 from collections import Counter
 import joblib, json
 from credit_fraud_utils_helper import save_best_model, get_scaling_method, get_processed_data
-from focal_loss_mlp import MLP_FL
-
+from mlp_focal_loss import MLP_FL
 
 def logistic_regression_model(sample_technique:str='none', config=None):
     '''
@@ -263,68 +262,61 @@ def neural_network_fl(sample_technique:str='none', config=None):
 
     preprocessing_methods = config.PREPROCESSING['scaler']
     random_state = config.RANDOM_STATE
-    input_dim = x_train.shape[1]        # input nodes
     hidden_layers =  [tuple(hid_sze) for hid_sze in config.MODELS['neural_network_fl']['params']['hidden_layers']]
-    activation = config.MODELS['neural_network_fl']['params']['activation']
     fl_alpha = config.MODELS['neural_network_fl']['params']['alpha']       # alpha
     fl_gamma = config.MODELS['neural_network_fl']['params']['gamma']       # gamma
     epochs = config.MODELS['neural_network_fl']['params']['epochs']         # epochs num
     patience = config.MODELS['neural_network_fl']['params']['patience']     # patience num
-    opts = config.MODELS['neural_network_fl']['params']['optimizer']['type'] # optimizer type
     opt_lr = config.MODELS['neural_network_fl']['params']['optimizer']['lr']    # learning rate
     opt_weight_decay = config.MODELS['neural_network_fl']['params']['optimizer']['weight_decay']     # weight decay
-    model_save_path = config.MODELS['neural_network']['sample'][sample_technique]['model']
-    model_meta_save_path = config.MODELS['neural_network']['sample'][sample_technique]['metadata']
-    cv_folds = config.EVALUATION['cv_folds']
-    scoring = config.EVALUATION['scoring']
+    model_save_path = config.MODELS['neural_network_fl']['sample'][sample_technique]['model']
+    model_meta_save_path = config.MODELS['neural_network_fl']['sample'][sample_technique]['metadata']
 
 
+
+    x_tr, x_val, t_tr, t_val = train_test_split(x_train, t_train, test_size=0.1,
+                                                random_state=random_state, shuffle=True, stratify=t_train)
     # scale data using standard scaling
     scalers = get_scaling_method(preprocessing_methods)
 
-    skf = StratifiedKFold(n_splits=cv_folds, random_state=random_state, shuffle=True)
+    # initiate model
+    model = MLP_FL(random_state=random_state, focal_loss_alpha=fl_alpha, focal_loss_gamma=fl_gamma, patience=patience)
 
-    pipeline = Pipeline([
-        ('scaler', scalers[0]),
-        ('model', MLP_FL(input_dim=input_dim, random_state=random_state, stratify=t_train))
-    ])
+    best_score = -1
+    best_model = None
+    for scaler in scalers:
+        for hl in hidden_layers:
+                    for lr in opt_lr:
+                        for wd in opt_weight_decay:
+                            for epoch in epochs:
+                                model = MLP_FL(random_state=random_state,
+                                               focal_loss_alpha=fl_alpha,
+                                               focal_loss_gamma=fl_gamma,
+                                               patience=patience,
+                                               hidden_layers=hl,
+                                               optimizer_lr=lr,
+                                               optimizer_weight_decay=wd,
+                                               epochs=epoch,
+                                               scaler=scaler)
+                                model.fit(x_tr, t_tr)
+                                score = model.score(x_val, t_val)
+                                if score > best_score:
+                                    best_score = score
+                                    best_model = model
 
-    params = {
-        'scaler' :                              scalers,
-        'model__hidden_layers':                 hidden_layers,
-        'model__activation'   :                 activation,
-        'model__epochs':                        epochs,
-        'model__patience':                      patience,
-        'model__optimizer':                     opts,
-        'model__optimizer_lr':                  opt_lr,
-        'model__optimizer_weight_decay':        opt_weight_decay,
-        'model__focal_loss_alpha':              fl_alpha,
-        'model__focal_loss_gamma':              fl_gamma
-    }
 
-    rand_grid = RandomizedSearchCV(pipeline,param_distributions=params, cv=skf ,scoring=scoring, n_jobs=1)
+    # get parameters and prepare metadata
+    best_params = {k: str(v) for k, v in best_model.get_params().items()}
 
-    from sklearn.utils.estimator_checks import check_is_fitted
-    from sklearn.base import is_classifier
-
-    print(is_classifier(rand_grid))  # should print True
-
-    rand_grid.fit(x_train, t_train)
-
-    best_params = {k: str(v) for k, v in rand_grid.best_params_.items()}
-
-    others = {
-        'sample_technieque' : sample_technique,
-        'best_score'        : rand_grid.best_score_
-    }
     nn_fl_meta = {
+        'sample_technique' : sample_technique,
         **best_params,
-        **others
+        'best_score': float(best_score)
     }
 
 
     # save best model with its parameters
-    save_best_model(rand_grid.best_estimator_, nn_fl_meta,
+    save_best_model(best_model, nn_fl_meta,
                     model_path=model_save_path,
                     metadata_path=model_meta_save_path)
 

@@ -83,7 +83,7 @@ def model_eval(val_data_path:str=None, val_meta_path:str=None,model_path:str|Non
 def save_best_model(model, metadata, model_path:str|None=None,metadata_path:str|None=None):
     '''
     save best trained model and it's parameters as metadat
-    :param model: the best model
+    :param model: trained model
     :param metadata: model's parameters
     :param model_path: where model will be saved
     :param metadata_path: where metadata will be saved

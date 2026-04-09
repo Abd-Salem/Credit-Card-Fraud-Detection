@@ -255,50 +255,43 @@ models:
       rus:
         dir: 'models/nn-fl/rus'
         model: 'models/nn-fl/rus/model.pkl'
-        scaler: 'model/nn-fl/none/model.pkl'
         metadata: 'models/nn-fl/rus/model_params.json'
         eval: 'models/nn-fl/rus/model_eval_scores.json'
       enn:
         dir: 'models/nn-fl/enn'
         model: 'models/nn-fl/enn/model.pkl'
-        scaler: 'model/nn-fl/none/model.pkl'
         metadata: 'models/nn-fl/enn/model_params.json'
         eval: 'models/nn-fl/enn/model_eval_scores.json'
       smote:
         dir: 'models/nn-fl/smote'
         model: 'models/nn-fl/smote/model.pkl'
-        scaler: 'model/nn-fl/none/model.pkl'
         metadata: 'models/nn-fl/smote/model_params.json'
         eval: 'models/nn-fl/smote/model_eval_scores.json'
       smoteenn:
         dir: 'models/nn-fl/smoteenn'
         model: 'models/nn-fl/smoteenn/model.pkl'
-        scaler: 'model/nn-fl/none/model.pkl'
         metadata: 'models/nn-fl/smoteenn/model_params.json'
         eval: 'models/nn-fl/smoteenn/model_eval_scores.json'
       smotetomek:
         dir: 'models/nn-fl/smotetomek'
         model: 'models/nn-fl/smotetomek/model.pkl'
-        scaler: 'model/nn-fl/none/model.pkl'
         metadata: 'models/nn-fl/smotetomek/model_params.json'
         eval: 'models/nn-fl/smotetomek/model_eval_scores.json'
 
     params:
-      alpha: [0.25]
-      gamma: [2]
+      alpha: 0.25
+      gamma: 2
       hidden_layers:
       - [32]
       - [64]
       - [64, 32]
       - [128, 64]
       - [128, 64, 32]
-      activation: ['relu', 'tanh']
-      epochs : [200, 400, 600, 800]
-      patience: [50]
+      epochs : [50, 100, 200, 300]
+      patience: 30
       optimizer:
-        type: ['adam', 'adamw']
-        lr: [0.001, 0.01, 0.0001]
-        weight_decay: [0.0001, 0.001, 0.01]
+        lr: [0.01, 0.001, 0.0001]
+        weight_decay: [0.0001, 0.001]
 
   voting_classifier:
     dir: 'models/voting'

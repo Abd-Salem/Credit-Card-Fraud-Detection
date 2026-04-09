@@ -19,8 +19,6 @@ def model_eval_report(model, X, y_true, *
     # get predictions with specific threshold
     y_preds = (model.predict_proba(X)[:, 1] >= threshold).astype(int)
 
-
-
     # calculate harmonic mean of f1-scores of both classes (sense small values which show weak classification angles of the model)
     report_dict = classification_report(y_true, y_preds, output_dict=True)    # get results in dict
     report_dict['hmean'] = hmean([report_dict['1']['f1-score'], report_dict['0']['f1-score']])
@@ -39,8 +37,6 @@ def avg_pr_fb_score(model, X, y_true, *,
     :param show_plot: if True it'll show the plot
     :return result: dic with metrics scores
     '''
-
-
     y_proba = model.predict_proba(X)[:, 1]      # get predicted probabilities
 
     precisions, recalls, thresholds = precision_recall_curve(y_true, y_proba)      # precisions, recalls & thresholds
@@ -57,10 +53,10 @@ def avg_pr_fb_score(model, X, y_true, *,
 
     # results in dict
     result = {
-        'AUPRC': auprc,
-        f'best_threshold(f{beta}-score)': best_threshold,
-        f'f{beta}-score class_0': score_0,
-        f'f{beta}score class_1': score_1,
+        'AUPRC': float(auprc),
+        f'best_threshold(f{beta}-score)': float(best_threshold),
+        f'f{beta}-score class_0': float(score_0),
+        f'f{beta}score class_1': float(score_1)
     }
 
 
