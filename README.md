@@ -1,4 +1,4 @@
-># 🔴 ***Credit-Card-Fraud-Detection***	((**In Progress**))
+># 🔴 ***Credit-Card-Fraud-Detection***	<font color="red">((**In Progress**))</font>
 ---
 ![Fraud-Detection-Img](https://github.com/user-attachments/assets/7006358d-f330-4730-a6bb-cffe9a652cbc)
 >## Project Overview
