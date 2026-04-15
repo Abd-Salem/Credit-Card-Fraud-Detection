@@ -29,16 +29,8 @@
         "V26",
         "V27",
         "V28",
-        "Amount",
-        "hour",
-        "minute",
-        "second",
-        "morning",
-        "afternoon",
-        "evening",
-        "night",
-        "high_amount"
+        "Amount"
     ],
     "n_features": 170884,
-    "n_samples": 38
+    "n_samples": 30
 }
