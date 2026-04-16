@@ -5,6 +5,18 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
 from credit_fraud_utils_eval import avg_pr_fb_score, model_eval_report
 
+def load_data(path: str, target_col_name='Class'):
+    '''
+    Load dataset & split to X, y
+    :param path: data path
+    :param target_col_name: columns name
+    :return X: input
+    :return y: ground truth
+    '''
+    df = pd.read_csv(path)
+    X = df.drop(target_col_name, axis=1)
+    y = df[target_col_name]
+    return X, y
 
 
 def get_processed_data(data_path:str|None=None, dtype='np', meta_path:str|None=None):
@@ -44,29 +56,28 @@ def get_scaling_method(scalers_names:list=['standard']):
     return [scalers[scaler] for scaler in scalers_names]        # return scalers
 
 
-def model_eval(val_data_path:str=None, val_meta_path:str=None,model_path:str|None=None ,model_eval_path:str|None=None,
-               show_plot:bool=False,beta:int=2):
+def model_eval(X, t, model_path:str|None=None ,eval_result_path:str|None=None,
+               beta:int=2, show_plot:bool=False, plot_path=None):
     '''
-    :param val_data_path: path to validation dataset
-    :param val_meta_path: path to metadata saved for validation dataset ( columns names )
+    :param X: input validation
+    :param t: ground truth
     :param model_path: trained model path
-    :param model_eval_path: evaluation path for metrics scores (.json)
-    :param show_plot: plot precision recall curve with the best threshold
+    :param eval_result_path: evaluation path for metrics scores (.json)
     :param beta: fscore (1, 2, 0.5)
+    :param show_plot: plot precision recall curve with the best threshold
+    :param plot_path: path of plot picture
     :return: None
     '''
 
     # get best model
     model = joblib.load(model_path)
 
-    x_val, t_val = get_processed_data(data_path=val_data_path, dtype='df', meta_path=val_meta_path)
-
     # evaluate using avg precision score and f(beta)score and show plot with best threshold
-    result = avg_pr_fb_score(model, x_val, t_val, beta=beta, show_plot=show_plot)
+    result = avg_pr_fb_score(model, X, t, beta=beta, show_plot=show_plot, plot_path=plot_path)
 
     # get classification report by using the best threshold with respect to the highest f(beta)score
-    report_1 = model_eval_report(model, x_val, t_val, threshold=result[f'best_threshold(f{beta}-score)'])
-    report_2 = model_eval_report(model, x_val, t_val, threshold=0.5)
+    report_1 = model_eval_report(model, X, t, threshold=result[f'best_threshold(f{beta}-score)'])
+    report_2 = model_eval_report(model, X, t, threshold=0.5)
 
     # model parameters and eval scores
     metadata = {
@@ -76,15 +87,14 @@ def model_eval(val_data_path:str=None, val_meta_path:str=None,model_path:str|Non
     }
 
     # save model metadata
-    with open(model_eval_path, 'w') as f:
+    with open(eval_result_path, 'w') as f:
         json.dump(metadata, f, indent=4)
 
-
-def save_best_model(model, metadata, model_path:str|None=None,metadata_path:str|None=None):
+def save_best_model(model, metadata, model_path:str|None=None, metadata_path:str|None=None):
     '''
     save best trained model and it's parameters as metadat
     :param model: trained model
-    :param metadata: model's parameters
+    :param metadata: parameters
     :param model_path: where model will be saved
     :param metadata_path: where metadata will be saved
     :return: None
@@ -97,6 +107,29 @@ def save_best_model(model, metadata, model_path:str|None=None,metadata_path:str|
     with open(metadata_path, 'w') as f:
         json.dump(metadata, f, indent=4)
 
+
+
+def compare_evals_get_best_model(config=None):
+    models = ['linear_regression', 'random_forest', 'neural_network', 'neural_network_fl', 'knn_classifier','voting_classifier']
+    samples = ['rus', 'enn', 'smote', 'smoteenn', 'smotetomek']
+
+    best_score = 0
+    best_sample = ''
+    model_name = ''
+
+    for model in models:
+        for sample in samples:
+            eval_path = config.MODELS[model][sample]['eval']
+            with open(eval_path, 'r') as f:
+                eval = json.load(f)
+
+            if eval['results']['AUPRC'] > best_score:
+                best_score = eval['results']['AUPRC']
+                model_name = model
+                best_sample = sample
+
+    # TODO
+    # save best model
 
 def parse_arg():
     '''
