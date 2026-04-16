@@ -1,6 +1,7 @@
 from credit_fraud_utils_helper import parse_arg, model_eval
 from credit_fraud_train import logistic_regression_model, random_forest_model, neural_network_classifier, \
     neural_network_fl, voting_classifier, knn_classifier
+from credit_fraud_utils_helper import load_data
 import torch
 import numpy as np
 from load_configs import Config
@@ -49,17 +50,22 @@ def main():
         train[arg.algorithm](sample_technique=arg.sampling, config=config)
 
     elif arg.mode == 'eval':
-        model_eval(val_data_path=config.DATASET['prepared']['val']['data'],val_meta_path=config.DATASET['prepared']['val']['metadata'],
+        X_val, t_val = load_data(path=config.DATASET['unprocessed']['val'])
+        model_eval(X=X_val, t=t_val,
                    model_path=config.MODELS[eval[arg.algorithm]]['sample'][arg.sampling]['model'],
-                   model_eval_path=config.MODELS[eval[arg.algorithm]]['sample'][arg.sampling]['eval'],
-                   show_plot=show_plot, beta=config.EVALUATION['beta'])
+                   eval_result_path=config.MODELS[eval[arg.algorithm]]['sample'][arg.sampling]['eval'],
+                   show_plot=show_plot, beta=config.EVALUATION['beta'],
+                   plot_path=f'{config.EVALUATION['dir']}/pr-curve_{eval[arg.algorithm]}_{arg.sampling}.png')
 
     elif arg.mode == 'full':
         train[arg.algorithm](sample_technique=arg.sampling, config=config)
-        model_eval(val_data_path=config.DATASET['prepared']['val']['data'],val_meta_path=config.DATASET['prepared']['val']['metadata'],
+
+        X_val, t_val = load_data(path=config.DATASET['unprocessed']['val'])
+        model_eval(X=X_val, t=t_val,
                    model_path=config.MODELS[eval[arg.algorithm]]['sample'][arg.sampling]['model'],
-                   model_eval_path=config.MODELS[eval[arg.algorithm]]['sample'][arg.sampling]['eval'],
-                   show_plot=show_plot, beta=config.EVALUATION['beta'])
+                   eval_result_path=config.MODELS[eval[arg.algorithm]]['sample'][arg.sampling]['eval'],
+                   show_plot=show_plot, beta=config.EVALUATION['beta'],
+                   plot_path=f'{config.EVALUATION['dir']}/pr-curve_{eval[arg.algorithm]}_{arg.sampling}.png')
 
 
 if __name__ == '__main__':

@@ -20,10 +20,6 @@ class Config:
     # create dir for processed data and trained models
     def _create_dirs(self):
         dirs = [
-            self.DATASET['prepared']['dir'],
-            self.DATASET['prepared']['train']['dir'],
-            self.DATASET['prepared']['val']['dir'],
-            self.DATASET['prepared']['test']['dir'],
             self.DATASET['sampled']['dir'],
             self.DATASET['sampled']['rus']['dir'],
             self.DATASET['sampled']['enn']['dir'],
@@ -82,7 +78,8 @@ class Config:
             self.MODELS['voting_classifier']['sample']['enn']['dir'],
             self.MODELS['voting_classifier']['sample']['smote']['dir'],
             self.MODELS['voting_classifier']['sample']['smoteenn']['dir'],
-            self.MODELS['voting_classifier']['sample']['smotetomek']['dir']
+            self.MODELS['voting_classifier']['sample']['smotetomek']['dir'],
+            self.EVALUATION['dir']
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
