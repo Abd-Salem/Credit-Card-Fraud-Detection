@@ -1,11 +1,10 @@
 {
+    "sample_technique": "smoteenn",
     "scaler": "StandardScaler()",
     "model__max_iter": "200",
-    "model__learning_rate_init": "0.001",
-    "model__hidden_layer_sizes": "(64, 32)",
-    "model__batch_size": "64",
+    "model__hidden_layer_sizes": "(128, 64)",
+    "model__batch_size": "128",
     "model__alpha": "0.001",
     "model__activation": "relu",
-    "sample_technique": "smoteenn",
-    "best_score": 0.9999884026060064
+    "best_score": 0.9999897766197592
 }

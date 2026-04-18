@@ -1,8 +1,8 @@
 {
+    "sample_technique": "smoteenn",
     "model__metric": "manhattan",
     "model__n_neighbors": "9",
-    "model__weights": "uniform",
+    "model__weights": "distance",
     "scaler": "StandardScaler()",
-    "sample_technique": "smoteenn",
-    "best_score": 0.9997210703418602
+    "best_score": 0.9994241219500207
 }

@@ -1,8 +1,8 @@
 {
-    "model__metric": "euclidean",
+    "sample_technique": "rus",
+    "model__metric": "manhattan",
     "model__n_neighbors": "9",
     "model__weights": "distance",
     "scaler": "RobustScaler()",
-    "sample_technique": "rus",
-    "best_score": 0.9723230763977947
+    "best_score": 0.9764145598075299
 }

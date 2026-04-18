@@ -1,9 +1,9 @@
 {
+    "sample_technique": "smote",
     "scaler": "RobustScaler()",
     "model__n_estimators": "600",
     "model__min_samples_leaf": "2",
     "model__max_depth": "20",
     "model__class_weight": "balanced",
-    "sample_technique": "smote",
-    "best_score": 0.9999976889678338
+    "best_score": 0.9999976807471807
 }

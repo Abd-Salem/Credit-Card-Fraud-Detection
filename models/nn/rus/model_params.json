@@ -1,11 +1,10 @@
 {
-    "scaler": "StandardScaler()",
-    "model__max_iter": "800",
-    "model__learning_rate_init": "0.001",
-    "model__hidden_layer_sizes": "(128, 64, 32)",
-    "model__batch_size": "128",
-    "model__alpha": "0.01",
-    "model__activation": "tanh",
     "sample_technique": "rus",
-    "best_score": 0.9884482089516158
+    "scaler": "StandardScaler()",
+    "model__max_iter": "400",
+    "model__hidden_layer_sizes": "(64, 32)",
+    "model__batch_size": "32",
+    "model__alpha": "0.001",
+    "model__activation": "relu",
+    "best_score": 0.9872682059265742
 }

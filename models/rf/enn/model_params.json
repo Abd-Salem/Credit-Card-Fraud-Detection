@@ -1,9 +1,9 @@
 {
+    "sample_technique": "enn",
     "scaler": "RobustScaler()",
     "model__n_estimators": "400",
     "model__min_samples_leaf": "2",
     "model__max_depth": "20",
     "model__class_weight": "balanced",
-    "sample_technique": "enn",
-    "best_score": 0.8396438248328536
+    "best_score": 0.8325177196452674
 }

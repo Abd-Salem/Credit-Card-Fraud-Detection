@@ -2,9 +2,8 @@
     "model__C": "0.1",
     "model__class_weight": "{1: 5, 0: 1}",
     "model__max_iter": "100",
-    "model__penalty": "l2",
     "model__solver": "liblinear",
     "scaler": "RobustScaler()",
     "sample_technique": "enn",
-    "best_score": 0.7789331703958571
+    "best_score": 0.7780916763688698
 }
