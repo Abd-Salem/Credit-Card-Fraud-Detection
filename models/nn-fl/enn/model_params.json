@@ -1,14 +1,14 @@
 {
     "sample_technique": "enn",
     "scaler": "RobustScaler()",
-    "hidden_layers": "(32,)",
+    "hidden_layers": "(128, 64, 32)",
     "activation": "relu",
     "dropout": "0.2",
-    "epochs": "200",
-    "optimizer": "adam",
-    "optimizer_lr": "0.01",
+    "epochs": "50",
+    "optimizer": "adamw",
+    "optimizer_lr": "0.001",
     "optimizer_weight_decay": "0.0001",
     "focal_loss_alpha": "0.25",
     "focal_loss_gamma": "2",
-    "best_score": 0.7967565451111449
+    "best_score": 0.7304313176866769
 }
