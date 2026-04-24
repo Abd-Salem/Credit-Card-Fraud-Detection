@@ -1,7 +1,7 @@
 {
     "vc": {
         "model__weights": [
-            1,
+            2,
             2,
             1
         ]
@@ -25,12 +25,13 @@
         "model__activation": "relu",
         "best_score": 0.9999897766197592
     },
-    "knn": {
+    "lr": {
+        "model__C": "10",
+        "model__class_weight": "{1: 10, 0: 1}",
+        "model__max_iter": "100",
+        "model__solver": "liblinear",
+        "scaler": "RobustScaler()",
         "sample_technique": "smoteenn",
-        "model__metric": "manhattan",
-        "model__n_neighbors": "9",
-        "model__weights": "distance",
-        "scaler": "StandardScaler()",
-        "best_score": 0.9994241219500207
+        "best_score": 0.9985669843672819
     }
 }

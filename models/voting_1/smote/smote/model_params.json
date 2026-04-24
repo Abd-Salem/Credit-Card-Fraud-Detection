@@ -1,9 +1,9 @@
 {
     "vc": {
         "model__weights": [
-            3,
             2,
-            2
+            2,
+            1
         ]
     },
     "rf": {
@@ -25,12 +25,13 @@
         "model__activation": "relu",
         "best_score": 0.9999882287469148
     },
-    "knn": {
-        "sample_technique": "smote",
-        "model__metric": "manhattan",
-        "model__n_neighbors": "9",
-        "model__weights": "distance",
+    "lr": {
+        "model__C": "10",
+        "model__class_weight": "{1: 10, 0: 1}",
+        "model__max_iter": "100",
+        "model__solver": "liblinear",
         "scaler": "RobustScaler()",
-        "best_score": 0.9994140875030035
+        "sample_technique": "smote",
+        "best_score": 0.9984607048731631
     }
 }

@@ -1,9 +1,9 @@
 {
     "vc": {
         "model__weights": [
-            3,
             2,
-            2
+            2,
+            1
         ]
     },
     "rf": {
@@ -25,12 +25,13 @@
         "model__activation": "relu",
         "best_score": 0.9999866480966437
     },
-    "knn": {
-        "sample_technique": "smotetomek",
-        "model__metric": "manhattan",
-        "model__n_neighbors": "9",
-        "model__weights": "distance",
+    "lr": {
+        "model__C": "10",
+        "model__class_weight": "{1: 10, 0: 1}",
+        "model__max_iter": "100",
+        "model__solver": "liblinear",
         "scaler": "RobustScaler()",
-        "best_score": 0.9994526352942735
+        "sample_technique": "smotetomek",
+        "best_score": 0.9985309819542708
     }
 }

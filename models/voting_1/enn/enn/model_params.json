@@ -25,12 +25,13 @@
         "model__activation": "relu",
         "best_score": 0.839708227850684
     },
-    "knn": {
+    "lr": {
+        "model__C": "0.1",
+        "model__class_weight": "{1: 5, 0: 1}",
+        "model__max_iter": "100",
+        "model__solver": "liblinear",
+        "scaler": "RobustScaler()",
         "sample_technique": "enn",
-        "model__metric": "manhattan",
-        "model__n_neighbors": "9",
-        "model__weights": "distance",
-        "scaler": "StandardScaler()",
-        "best_score": 0.8044435882152075
+        "best_score": 0.7780916763688698
     }
 }
