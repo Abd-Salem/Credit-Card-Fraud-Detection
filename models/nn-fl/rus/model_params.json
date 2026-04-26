@@ -1,14 +1,14 @@
 {
     "sample_technique": "rus",
-    "scaler": "RobustScaler()",
-    "hidden_layers": "(128, 64)",
+    "scaler": "StandardScaler()",
+    "hidden_layers": "(128, 64, 32)",
     "activation": "relu",
     "dropout": "0.2",
-    "epochs": "50",
+    "epochs": "200",
     "optimizer": "adamw",
     "optimizer_lr": "0.001",
     "optimizer_weight_decay": "0.0001",
     "focal_loss_alpha": "0.25",
-    "focal_loss_gamma": "2",
-    "best_score": 0.9989919354838708
+    "focal_loss_gamma": "2.0",
+    "best_score": 0.9999999999999999
 }

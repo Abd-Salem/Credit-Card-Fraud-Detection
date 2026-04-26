@@ -1,0 +1,36 @@
+{
+    "vc": {
+        "model__weights": [
+            1,
+            2,
+            1
+        ]
+    },
+    "rf": {
+        "sample_technique": "smoteenn",
+        "scaler": "RobustScaler()",
+        "model__n_estimators": "600",
+        "model__min_samples_leaf": "2",
+        "model__max_depth": "20",
+        "model__class_weight": "balanced",
+        "best_score": 0.9999980374796781
+    },
+    "nn": {
+        "sample_technique": "smoteenn",
+        "scaler": "StandardScaler()",
+        "model__max_iter": "200",
+        "model__hidden_layer_sizes": "(128, 64)",
+        "model__batch_size": "128",
+        "model__alpha": "0.001",
+        "model__activation": "relu",
+        "best_score": 0.9999897766197592
+    },
+    "knn": {
+        "sample_technique": "smoteenn",
+        "model__metric": "manhattan",
+        "model__n_neighbors": "9",
+        "model__weights": "distance",
+        "scaler": "StandardScaler()",
+        "best_score": 0.9994241219500207
+    }
+}

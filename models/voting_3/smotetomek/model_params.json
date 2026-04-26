@@ -1,0 +1,46 @@
+{
+    "vc": {
+        "model__weights": [
+            3,
+            3,
+            1,
+            2
+        ]
+    },
+    "rf": {
+        "sample_technique": "smotetomek",
+        "scaler": "RobustScaler()",
+        "model__n_estimators": "400",
+        "model__min_samples_leaf": "2",
+        "model__max_depth": "20",
+        "model__class_weight": "balanced",
+        "best_score": 0.9999968252108719
+    },
+    "nn": {
+        "sample_technique": "smotetomek",
+        "scaler": "StandardScaler()",
+        "model__max_iter": "400",
+        "model__hidden_layer_sizes": "(128, 64, 32)",
+        "model__batch_size": "128",
+        "model__alpha": "0.001",
+        "model__activation": "relu",
+        "best_score": 0.9999866480966437
+    },
+    "lr": {
+        "model__C": "10",
+        "model__class_weight": "{1: 10, 0: 1}",
+        "model__max_iter": "100",
+        "model__solver": "liblinear",
+        "scaler": "RobustScaler()",
+        "sample_technique": "smotetomek",
+        "best_score": 0.9985309819542708
+    },
+    "knn": {
+        "sample_technique": "smotetomek",
+        "model__metric": "manhattan",
+        "model__n_neighbors": "9",
+        "model__weights": "distance",
+        "scaler": "RobustScaler()",
+        "best_score": 0.9994526352942735
+    }
+}
