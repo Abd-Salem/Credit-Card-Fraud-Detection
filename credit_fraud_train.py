@@ -9,8 +9,7 @@ from collections import Counter
 import joblib, json
 from credit_fraud_utils_data import feature_construction, feature_transformation, load_data
 from credit_fraud_utils_helper import save_best_model, get_scaling_method, get_processed_data
-from mlp_focal_loss import MLP_FL
-
+from mlp_focal_loss import MLP_FL, MLP_Pipeline
 
 
 def logistic_regression_model(sample_technique:str='none', config=None):
@@ -73,7 +72,7 @@ def logistic_regression_model(sample_technique:str='none', config=None):
 
     # apply grid search with different parameters and get the best estimator
     grid = GridSearchCV(pipeline,param_grid=param_grid,
-                        scoring=scoring, cv=skf, n_jobs=3)
+                        scoring=scoring, cv=skf, n_jobs=-1)
 
     grid.fit(x_train, t_train)                  # fit model
 
@@ -93,6 +92,7 @@ def logistic_regression_model(sample_technique:str='none', config=None):
     save_best_model(grid.best_estimator_ , lr_meta,
                     model_path=model_save_path,
                     metadata_path=meta_save_path)
+
 
 def random_forest_model(sample_technique:str='none', config=None):
     '''
@@ -134,7 +134,7 @@ def random_forest_model(sample_technique:str='none', config=None):
         ('feature_construction', FunctionTransformer(feature_construction)),
         ('feature_transformation', FunctionTransformer(feature_transformation)),
         ('scaler', scalers[0]),
-        ('model', RandomForestClassifier(random_state=random_state ,n_jobs=1))
+        ('model', RandomForestClassifier(random_state=random_state ,n_jobs=-1))
     ])
 
     params = {
@@ -165,6 +165,7 @@ def random_forest_model(sample_technique:str='none', config=None):
     save_best_model(rand_grid.best_estimator_, rf_meta,
                     model_path=model_save_path,
                     metadata_path=model_meta_save_path)
+
 
 def neural_network_classifier(sample_technique:str='none', config=None):
     '''
@@ -221,7 +222,7 @@ def neural_network_classifier(sample_technique:str='none', config=None):
 
     rand_grid = RandomizedSearchCV(pipeline, param_distributions=params,
                         n_iter=n_iter,scoring=scoring,
-                              cv=skf, n_jobs=4)
+                              cv=skf, n_jobs=-1)
 
     rand_grid.fit(x_train, t_train)           # fit model
 
@@ -241,6 +242,7 @@ def neural_network_classifier(sample_technique:str='none', config=None):
                     model_path=model_save_path,
                     metadata_path=model_meta_save_path)
 
+
 def neural_network_fl(sample_technique:str='none', config=None):
     '''
     train neural network model with focal loss as cost function
@@ -251,8 +253,7 @@ def neural_network_fl(sample_technique:str='none', config=None):
 
     # get train data according to chosen sample technique
     if sample_technique == 'none':
-        x_train, t_train = get_processed_data(data_path=config.DATASET['prepared']['train']['data'],
-                                              dtype='df', meta_path=config.DATASET['prepared']['train']['metadata'])
+        x_train, t_train = load_data(path=config.DATASET['unprocessed']['train'])
     else:
         x_train, t_train = get_processed_data(data_path=config.DATASET['sampled'][sample_technique]['train']['data'],
                                               dtype='df', meta_path=config.DATASET['sampled'][sample_technique]['train']['metadata'])
@@ -261,11 +262,12 @@ def neural_network_fl(sample_technique:str='none', config=None):
     preprocessing_methods = config.PREPROCESSING['scaler']
     random_state = config.RANDOM_STATE
     hidden_layers =  [tuple(hid_sze) for hid_sze in config.MODELS['neural_network_fl']['params']['hidden_layers']]
-    fl_alpha = config.MODELS['neural_network_fl']['params']['alpha']       # alpha
-    fl_gamma = config.MODELS['neural_network_fl']['params']['gamma']       # gamma
+    fl_alphas = config.MODELS['neural_network_fl']['params']['alpha']       # alpha
+    fl_gammas = config.MODELS['neural_network_fl']['params']['gamma']       # gamma
     epochs = config.MODELS['neural_network_fl']['params']['epochs']         # epochs num
     patience = config.MODELS['neural_network_fl']['params']['patience']     # patience num
     opt_lr = config.MODELS['neural_network_fl']['params']['optimizer']['lr']    # learning rate
+    weight_decays = config.MODELS['neural_network_fl']['params']['optimizer']['weight_decay']
     model_save_path = config.MODELS['neural_network_fl']['sample'][sample_technique]['model']
     model_meta_save_path = config.MODELS['neural_network_fl']['sample'][sample_technique]['metadata']
 
@@ -276,28 +278,40 @@ def neural_network_fl(sample_technique:str='none', config=None):
     # scale data using standard scaling
     scalers = get_scaling_method(preprocessing_methods)
 
-    # initiate model
-    model = MLP_FL(random_state=random_state, focal_loss_alpha=fl_alpha, focal_loss_gamma=fl_gamma, patience=patience)
-
     best_score = -1
     best_model = None
+    best_scaler = None
     for scaler in scalers:
         for hl in hidden_layers:
             for lr in opt_lr:
-                for epoch in epochs:
-                    model = MLP_FL(random_state=random_state,
-                                    focal_loss_alpha=fl_alpha,
-                                    focal_loss_gamma=fl_gamma,
-                                    patience=patience,
-                                    hidden_layers=hl,
-                                    optimizer_lr=lr,
-                                    epochs=epoch,
-                                    scaler=scaler)
-                    model.fit(x_tr, t_tr)
-                    score = model.score(x_val, t_val)
-                    if score > best_score:
-                        best_score = score
-                        best_model = model
+                for wd in weight_decays:
+                    for fl_alpha in fl_alphas:
+                        for fl_gamma in fl_gammas:
+                            for epoch in epochs:
+                                preprocessing = Pipeline([
+                                    ('feature_construction', FunctionTransformer(feature_construction)),
+                                    ('feature_transformation', FunctionTransformer(feature_transformation)),
+                                    ('scaler', scaler)
+                                ])
+                                model = model=MLP_FL(random_state=random_state,
+                                                focal_loss_alpha=fl_alpha,
+                                                focal_loss_gamma=fl_gamma,
+                                                patience=patience,
+                                                hidden_layers=hl,
+                                                optimizer_lr=lr,
+                                                optimizer_weight_decay=wd,
+                                                batch_size=64,
+                                                epochs=epoch)
+                                pipeline = MLP_Pipeline(steps=[
+                                    ('preprocessing', preprocessing),
+                                    ('model', model)
+                                ])
+                                pipeline.fit(x_tr, t_tr)
+                                score = pipeline.score(x_val, t_val)
+                                if score > best_score:
+                                    best_score = score
+                                    best_scaler = scaler
+                                    best_model = pipeline
 
 
     # get parameters and prepare metadata
@@ -305,6 +319,7 @@ def neural_network_fl(sample_technique:str='none', config=None):
 
     nn_fl_meta = {
         'sample_technique' : sample_technique,
+        'scaler': str(best_scaler),
         **best_params,
         'best_score': float(best_score)
     }
@@ -314,6 +329,7 @@ def neural_network_fl(sample_technique:str='none', config=None):
     save_best_model(best_model, nn_fl_meta,
                     model_path=model_save_path,
                     metadata_path=model_meta_save_path)
+
 
 def knn_classifier(sample_technique:str='none', config=None):
     '''
@@ -365,7 +381,7 @@ def knn_classifier(sample_technique:str='none', config=None):
 
 
     # create grid
-    grid = GridSearchCV(pipeline, param_grid=params, cv=skf, scoring=scoring, n_jobs=4)
+    grid = GridSearchCV(pipeline, param_grid=params, cv=skf, scoring=scoring, n_jobs=-1)
 
     # try all fits and tune over parameters
     grid.fit(x_train, t_train)
@@ -385,7 +401,8 @@ def knn_classifier(sample_technique:str='none', config=None):
                     model_path=model_save_path,
                     metadata_path=meta_save_path)
 
-def voting_classifier(sample_technique:str='none', config=None):
+
+def voting_classifier_1(sample_technique:str='none', config=None):
     '''
     Train voting classifier model
     :param sample_technique: which data processed with
@@ -394,13 +411,13 @@ def voting_classifier(sample_technique:str='none', config=None):
     '''
 
     # save paths
-    model_save_path = config.MODELS['voting_classifier']['sample'][sample_technique]['model']
-    model_meta_save_path = config.MODELS['voting_classifier']['sample'][sample_technique]['metadata']
+    model_save_path = config.MODELS['voting_classifier_1']['sample'][sample_technique]['model']
+    model_meta_save_path = config.MODELS['voting_classifier_1']['sample'][sample_technique]['metadata']
 
     # get configs
     n_splits = config.EVALUATION['cv_folds']
     random_state = config.RANDOM_STATE
-    weights = config.MODELS['voting_classifier']['params']['weights']
+    weights = config.MODELS['voting_classifier_1']['params']['weights']
 
 
 
@@ -413,7 +430,86 @@ def voting_classifier(sample_technique:str='none', config=None):
 
 
 
-    # best pretrained models on different sample techniques
+    # best pretrained models on the same sample technique
+    rf_model = joblib.load(config.MODELS['random_forest']['sample'][sample_technique]['model'])
+    nn_model = joblib.load(config.MODELS['neural_network']['sample'][sample_technique]['model'])
+    lr_model = joblib.load(config.MODELS['logistic_regression']['sample'][sample_technique]['model'])
+
+
+    # preserve the distribution
+    skf = StratifiedKFold(n_splits=n_splits, random_state=random_state, shuffle=True)
+
+    # prepare estimators
+    models = [
+        ('rf' , rf_model),
+        ('nn' , nn_model),
+        ('lr', lr_model)
+    ]
+
+    pipeline = Pipeline([('model', VotingClassifier(estimators=models, voting='soft'))])
+    params = {
+        'model__weights' : weights
+    }
+
+    # create voting model
+    grid = GridSearchCV(pipeline, param_grid=params,cv=skf, scoring='average_precision', n_jobs=-1)
+
+    # fit data
+    grid.fit(x_train, t_train)
+
+    # models metadata
+    with open(config.MODELS['random_forest']['sample'][sample_technique]['metadata'], 'r') as f:
+        rf_meta = json.load(f)
+
+    with open(config.MODELS['neural_network']['sample'][sample_technique]['metadata'], 'r') as f:
+        nn_meta = json.load(f)
+
+    with open(config.MODELS['logistic_regression']['sample'][sample_technique]['metadata'], 'r') as f:
+        lr_meta = json.load(f)
+
+    # collect all models metadata
+    voting_meta = {
+        'vc' : grid.best_params_,
+        'rf' : rf_meta,
+        'nn' : nn_meta,
+        'lr' : lr_meta
+    }
+
+    # save best model
+    save_best_model(grid.best_estimator_ , voting_meta,
+                    model_path=model_save_path,
+                    metadata_path=model_meta_save_path)
+
+
+def voting_classifier_2(sample_technique:str='none', config=None):
+    '''
+    Train voting classifier model
+    :param sample_technique: which data processed with
+    :param config: config loader
+    :return: None
+    '''
+
+    # save paths
+    model_save_path = config.MODELS['voting_classifier_2']['sample'][sample_technique]['model']
+    model_meta_save_path = config.MODELS['voting_classifier_2']['sample'][sample_technique]['metadata']
+
+    # get configs
+    n_splits = config.EVALUATION['cv_folds']
+    random_state = config.RANDOM_STATE
+    weights = config.MODELS['voting_classifier_2']['params']['weights']
+
+
+
+    # get train data according to chosen sample technique
+    if sample_technique == 'none':
+        x_train, t_train = load_data(path=config.DATASET['unprocessed']['train'])
+    else:
+        x_train, t_train = get_processed_data(data_path=config.DATASET['sampled'][sample_technique]['train']['data'],
+                                              dtype='df', meta_path=config.DATASET['sampled'][sample_technique]['train']['metadata'])
+
+
+
+    # best pretrained models on the same sample technique
     rf_model = joblib.load(config.MODELS['random_forest']['sample'][sample_technique]['model'])
     nn_model = joblib.load(config.MODELS['neural_network']['sample'][sample_technique]['model'])
     knn_model = joblib.load(config.MODELS['knn_classifier']['sample'][sample_technique]['model'])
@@ -435,7 +531,7 @@ def voting_classifier(sample_technique:str='none', config=None):
     }
 
     # create voting model
-    grid = GridSearchCV(pipeline, param_grid=params,cv=skf, scoring='average_precision', n_jobs=4)
+    grid = GridSearchCV(pipeline, param_grid=params,cv=skf, scoring='average_precision', n_jobs=-1)
 
     # fit data
     grid.fit(x_train, t_train)
@@ -455,6 +551,91 @@ def voting_classifier(sample_technique:str='none', config=None):
         'vc' : grid.best_params_,
         'rf' : rf_meta,
         'nn' : nn_meta,
+        'knn': knn_meta
+    }
+
+    # save best model
+    save_best_model(grid.best_estimator_ , voting_meta,
+                    model_path=model_save_path,
+                    metadata_path=model_meta_save_path)
+
+
+def voting_classifier_3(sample_technique:str='none', config=None):
+    '''
+    Train voting classifier model
+    :param sample_technique: which data processed with
+    :param config: config loader
+    :return: None
+    '''
+
+    # save paths
+    model_save_path = config.MODELS['voting_classifier_3']['sample'][sample_technique]['model']
+    model_meta_save_path = config.MODELS['voting_classifier_3']['sample'][sample_technique]['metadata']
+
+    # get configs
+    n_splits = config.EVALUATION['cv_folds']
+    random_state = config.RANDOM_STATE
+    weights = config.MODELS['voting_classifier_3']['params']['weights']
+
+
+
+    # get train data according to chosen sample technique
+    if sample_technique == 'none':
+        x_train, t_train = load_data(path=config.DATASET['unprocessed']['train'])
+    else:
+        x_train, t_train = get_processed_data(data_path=config.DATASET['sampled'][sample_technique]['train']['data'],
+                                              dtype='df', meta_path=config.DATASET['sampled'][sample_technique]['train']['metadata'])
+
+
+
+    # best pretrained models on the same sample technique
+    rf_model = joblib.load(config.MODELS['random_forest']['sample'][sample_technique]['model'])
+    nn_model = joblib.load(config.MODELS['neural_network']['sample'][sample_technique]['model'])
+    lr_model = joblib.load(config.MODELS['logistic_regression']['sample'][sample_technique]['model'])
+    knn_model = joblib.load(config.MODELS['knn_classifier']['sample'][sample_technique]['model'])
+
+
+    # preserve the distribution
+    skf = StratifiedKFold(n_splits=n_splits, random_state=random_state, shuffle=True)
+
+    # prepare estimators
+    models = [
+        ('rf' , rf_model),
+        ('nn' , nn_model),
+        ('lr', lr_model),
+        ('knn', knn_model)
+    ]
+
+    pipeline = Pipeline([('model', VotingClassifier(estimators=models, voting='soft'))])
+    params = {
+        'model__weights' : weights
+    }
+
+    # create voting model
+    grid = GridSearchCV(pipeline, param_grid=params,cv=skf, scoring='average_precision', n_jobs=-1)
+
+    # fit data
+    grid.fit(x_train, t_train)
+
+    # models metadata
+    with open(config.MODELS['random_forest']['sample'][sample_technique]['metadata'], 'r') as f:
+        rf_meta = json.load(f)
+
+    with open(config.MODELS['neural_network']['sample'][sample_technique]['metadata'], 'r') as f:
+        nn_meta = json.load(f)
+
+    with open(config.MODELS['logistic_regression']['sample'][sample_technique]['metadata'], 'r') as f:
+        lr_meta = json.load(f)
+
+    with open(config.MODELS['knn_classifier']['sample'][sample_technique]['metadata'], 'r') as f:
+        knn_meta = json.load(f)
+
+    # collect all models metadata
+    voting_meta = {
+        'vc' : grid.best_params_,
+        'rf' : rf_meta,
+        'nn' : nn_meta,
+        'lr' : lr_meta,
         'knn': knn_meta
     }
 

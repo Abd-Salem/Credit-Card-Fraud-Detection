@@ -61,7 +61,6 @@ def main():
                    eval_result_path=config.MODELS[eval[arg.algorithm]]['sample'][arg.sampling]['eval'],
                    show_plot=show_plot, beta=config.EVALUATION['beta'],
                    plot_path=f'{config.EVALUATION['dir']}/pr-curve_{eval[arg.algorithm]}_{arg.sampling}.png')
-
         compare_evals_retrain_best_model(config=config)
 
 

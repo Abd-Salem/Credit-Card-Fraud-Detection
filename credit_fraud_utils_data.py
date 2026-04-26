@@ -46,14 +46,15 @@ def feature_transformation(df:pd.DataFrame):
     return df
 
 
-def sample_save_data(data_path:str='', config=Config()):
+def sample_save_data(split_name='train', config=Config()):
     '''
     apply all sample techniques for train split data and save for modeling fits
-    :param data_path: where data is saved
+    :param split_name: split name
     :param config: set configurations
     :return: None
     '''
 
+    data_path = config.DATASET['unprocessed'][split_name]
     X, t = load_data(data_path, target_col_name=config.FEATURES['target'])
 
     # get our configs
@@ -91,8 +92,8 @@ def sample_save_data(data_path:str='', config=Config()):
         }
 
         # save sampled data in .npz file
-        data_save_path = config.DATASET['sampled'][name]['train']['data']
-        metadata_save_path = config.DATASET['sampled'][name]['train']['metadata']
+        data_save_path = config.DATASET['sampled'][name][split_name]['data']
+        metadata_save_path = config.DATASET['sampled'][name][split_name]['metadata']
 
         # save data
         np.savez_compressed(data_save_path, x=x_sampled, y=y_sampled)
@@ -105,9 +106,8 @@ if __name__ == '__main__':
 
     # configs
     config = Config()
-    splits_to_sample = ['train']
+    splits_to_sample = ['train', 'train_val']
 
     # sample train and val data
     for split in splits_to_sample:
-        sample_save_data(data_path=config.DATASET['unprocessed'][split],
-                         config=config)
+        sample_save_data(split_name=split, config=config)

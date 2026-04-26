@@ -5,6 +5,7 @@ dataset:
   unprocessed:
     train: 'split/train.csv'
     val: 'split/val.csv'
+    train_val: 'split/train_val.csv'
     test: 'split/test.csv'
 
   sampled:
@@ -15,10 +16,10 @@ dataset:
         dir: 'processed_data/sampled/rus/train'
         data: 'processed_data/sampled/rus/train/train.npz'
         metadata: 'processed_data/sampled/rus/train/train.json'
-      val:
-        dir: 'processed_data/sampled/rus/val'
-        data: 'processed_data/sampled/rus/val/train.npz'
-        metadata: 'processed_data/sampled/rus/val/train.json'
+      train_val:
+        dir: 'processed_data/sampled/rus/train_val'
+        data: 'processed_data/sampled/rus/train_val/train_val.npz'
+        metadata: 'processed_data/sampled/rus/train_val/train_val.json'
 
     enn:
       dir: 'processed_data/sampled/enn'
@@ -26,40 +27,43 @@ dataset:
         dir: 'processed_data/sampled/enn/train'
         data: 'processed_data/sampled/enn/train/train.npz'
         metadata: 'processed_data/sampled/enn/train/train.json'
-      val:
-        dir: 'processed_data/sampled/enn/val'
-        data: 'processed_data/sampled/enn/val/train.npz'
-        metadata: 'processed_data/sampled/enn/val/train.json'
+      train_val:
+        dir: 'processed_data/sampled/enn/train_val'
+        data: 'processed_data/sampled/enn/train_val/train_val.npz'
+        metadata: 'processed_data/sampled/enn/train_val/train_val.json'
+
     smote:
       dir: 'processed_data/sampled/smote'
       train:
         dir: 'processed_data/sampled/smote/train'
         data: 'processed_data/sampled/smote/train/train.npz'
         metadata: 'processed_data/sampled/smote/train/train.json'
-      val:
-        dir: 'processed_data/sampled/smote/val'
-        data: 'processed_data/sampled/smote/val/train.npz'
-        metadata: 'processed_data/sampled/smote/val/train.json'
+      train_val:
+        dir: 'processed_data/sampled/smote/train_val'
+        data: 'processed_data/sampled/smote/train_val/train_val.npz'
+        metadata: 'processed_data/sampled/smote/train_val/train_val.json'
+
     smoteenn:
       dir: 'processed_data/sampled/smoteenn'
       train:
         dir: 'processed_data/sampled/smoteenn/train'
         data: 'processed_data/sampled/smoteenn/train/train.npz'
         metadata: 'processed_data/sampled/smoteenn/train/train.json'
-      val:
-        dir: 'processed_data/sampled/smoteenn/val'
-        data: 'processed_data/sampled/smoteenn/val/train.npz'
-        metadata: 'processed_data/sampled/smoteenn/val/train.json'
+      train_val:
+        dir: 'processed_data/sampled/smoteenn/train_val'
+        data: 'processed_data/sampled/smoteenn/train_val/train_val.npz'
+        metadata: 'processed_data/sampled/smoteenn/train_val/train_val.json'
+
     smotetomek:
       dir: 'processed_data/sampled/smotetomek'
       train:
         dir: 'processed_data/sampled/smotetomek/train'
         data: 'processed_data/sampled/smotetomek/train/train.npz'
         metadata: 'processed_data/sampled/smotetomek/train/train.json'
-      val:
-        dir: 'processed_data/sampled/smotetomek/val'
-        data: 'processed_data/sampled/smotetomek/val/train.npz'
-        metadata: 'processed_data/sampled/smotetomek/val/train.json'
+      train_val:
+        dir: 'processed_data/sampled/smotetomek/train_val'
+        data: 'processed_data/sampled/smotetomek/train_val/train_val.npz'
+        metadata: 'processed_data/sampled/smotetomek/train_val/train_val.json'
 
 
 
@@ -262,62 +266,18 @@ models:
         eval: 'models/nn-fl/smotetomek/model_eval_scores.json'
 
     params:
-      alpha: 0.25
-      gamma: 2
+      alpha: [0.25, 0.5, 0.75]
+      gamma: [2.0, 3.0]
       hidden_layers:
       - [32]
-      - [64]
       - [64, 32]
-      - [128, 64]
+      - [128, 32]
       - [128, 64, 32]
       epochs : [50, 100, 200]
       patience: 30
       optimizer:
         lr: [0.001]
-
-  voting_classifier:
-    dir: 'models/voting'
-    sample:
-      none:
-        dir: 'models/voting/none'
-        model: 'models/voting/none/model.pkl'
-        metadata: 'models/voting/none/model_params.json'
-        eval: 'models/voting/none/model_eval_scores.json'
-      rus:
-        dir: 'models/voting/rus'
-        model: 'models/voting/rus/model.pkl'
-        metadata: 'models/voting/rus/model_params.json'
-        eval: 'models/voting/rus/model_eval_scores.json'
-      enn:
-        dir: 'models/voting/enn'
-        model: 'models/voting/enn/model.pkl'
-        metadata: 'models/voting/enn/model_params.json'
-        eval: 'models/voting/enn/model_eval_scores.json'
-      smote:
-        dir: 'models/voting/smote'
-        model: 'models/voting/smote/model.pkl'
-        metadata: 'models/voting/smote/model_params.json'
-        eval: 'models/voting/smote/model_eval_scores.json'
-      smoteenn:
-        dir: 'models/voting/smoteenn'
-        model: 'models/voting/smoteenn/model.pkl'
-        metadata: 'models/voting/smoteenn/model_params.json'
-        eval: 'models/voting/smoteenn/model_eval_scores.json'
-      smotetomek:
-        dir: 'models/voting/smotetomek'
-        model: 'models/voting/smotetomek/model.pkl'
-        metadata: 'models/voting/smotetomek/model_params.json'
-        eval: 'models/voting/smotetomek/model_eval_scores.json'
-
-    params:
-      weights: [
-                 [1,1,1],
-                 [2,1,1],
-                 [1,2,1],
-                 [2,2,1],
-                 [3,2,1],
-                 [3,2,2]
-      ]
+        weight_decay: [0.001, 0.0001]
 
   knn_classifier:
     dir: 'models/knn'
@@ -357,6 +317,135 @@ models:
       k: [3, 5, 7, 9]
       weights: ['uniform', 'distance']
       metric: ['manhattan', 'euclidean', 'minkowski']
+
+
+
+  voting_classifier_1:
+    dir: 'models/voting_1'
+    sample:
+      none:
+        dir: 'models/voting_1/none'
+        model: 'models/voting_1/none/model.pkl'
+        metadata: 'models/voting_1/none/model_params.json'
+        eval: 'models/voting_1/none/model_eval_scores.json'
+      rus:
+        dir: 'models/voting_1/rus'
+        model: 'models/voting_1/rus/model.pkl'
+        metadata: 'models/voting_1/rus/model_params.json'
+        eval: 'models/voting_1/rus/model_eval_scores.json'
+      enn:
+        dir: 'models/voting_1/enn'
+        model: 'models/voting_1/enn/model.pkl'
+        metadata: 'models/voting_1/enn/model_params.json'
+        eval: 'models/voting_1/enn/model_eval_scores.json'
+      smote:
+        dir: 'models/voting_1/smote'
+        model: 'models/voting_1/smote/model.pkl'
+        metadata: 'models/voting_1/smote/model_params.json'
+        eval: 'models/voting_1/smote/model_eval_scores.json'
+      smoteenn:
+        dir: 'models/voting_1/smoteenn'
+        model: 'models/voting_1/smoteenn/model.pkl'
+        metadata: 'models/voting_1/smoteenn/model_params.json'
+        eval: 'models/voting_1/smoteenn/model_eval_scores.json'
+      smotetomek:
+        dir: 'models/voting_1/smotetomek'
+        model: 'models/voting_1/smotetomek/model.pkl'
+        metadata: 'models/voting_1/smotetomek/model_params.json'
+        eval: 'models/voting_1/smotetomek/model_eval_scores.json'
+
+    params:
+      weights: [
+                 [2,1,1],
+                 [1,2,1],
+                 [2,2,1]
+      ]
+
+
+  voting_classifier_2:
+    dir: 'models/voting_2'
+    sample:
+      none:
+        dir: 'models/voting_2/none'
+        model: 'models/voting_2/none/model.pkl'
+        metadata: 'models/voting_2/none/model_params.json'
+        eval: 'models/voting_2/none/model_eval_scores.json'
+      rus:
+        dir: 'models/voting_2/rus'
+        model: 'models/voting_2/rus/model.pkl'
+        metadata: 'models/voting_2/rus/model_params.json'
+        eval: 'models/voting_2/rus/model_eval_scores.json'
+      enn:
+        dir: 'models/voting_2/enn'
+        model: 'models/voting_2/enn/model.pkl'
+        metadata: 'models/voting_2/enn/model_params.json'
+        eval: 'models/voting_2/enn/model_eval_scores.json'
+      smote:
+        dir: 'models/voting_2/smote'
+        model: 'models/voting_2/smote/model.pkl'
+        metadata: 'models/voting_2/smote/model_params.json'
+        eval: 'models/voting_2/smote/model_eval_scores.json'
+      smoteenn:
+        dir: 'models/voting_2/smoteenn'
+        model: 'models/voting_2/smoteenn/model.pkl'
+        metadata: 'models/voting_2/smoteenn/model_params.json'
+        eval: 'models/voting_2/smoteenn/model_eval_scores.json'
+      smotetomek:
+        dir: 'models/voting_2/smotetomek'
+        model: 'models/voting_2/smotetomek/model.pkl'
+        metadata: 'models/voting_2/smotetomek/model_params.json'
+        eval: 'models/voting_2/smotetomek/model_eval_scores.json'
+
+    params:
+      weights: [
+                 [2,1,1],
+                 [1,2,1],
+                 [2,2,1]
+      ]
+
+
+  voting_classifier_3:
+    dir: 'models/voting_3'
+    sample:
+      none:
+        dir: 'models/voting_3/none'
+        model: 'models/voting_3/none/model.pkl'
+        metadata: 'models/voting_3/none/model_params.json'
+        eval: 'models/voting_3/none/model_eval_scores.json'
+      rus:
+        dir: 'models/voting_3/rus'
+        model: 'models/voting_3/rus/model.pkl'
+        metadata: 'models/voting_3/rus/model_params.json'
+        eval: 'models/voting_3/rus/model_eval_scores.json'
+      enn:
+        dir: 'models/voting_3/enn'
+        model: 'models/voting_3/enn/model.pkl'
+        metadata: 'models/voting_3/enn/model_params.json'
+        eval: 'models/voting_3/enn/model_eval_scores.json'
+      smote:
+        dir: 'models/voting_3/smote'
+        model: 'models/voting_3/smote/model.pkl'
+        metadata: 'models/voting_3/smote/model_params.json'
+        eval: 'models/voting_3/smote/model_eval_scores.json'
+      smoteenn:
+        dir: 'models/voting_3/smoteenn'
+        model: 'models/voting_3/smoteenn/model.pkl'
+        metadata: 'models/voting_3/smoteenn/model_params.json'
+        eval: 'models/voting_3/smoteenn/model_eval_scores.json'
+      smotetomek:
+        dir: 'models/voting_3/smotetomek'
+        model: 'models/voting_3/smotetomek/model.pkl'
+        metadata: 'models/voting_3/smotetomek/model_params.json'
+        eval: 'models/voting_3/smotetomek/model_eval_scores.json'
+
+    params:
+      weights: [
+                 [2,1,1,1],
+                 [2,2,1,1],
+                 [2,2,1,2],
+                 [3,2,1,2],
+                 [3,3,1,2]
+      ]
 
 
   best_model:

@@ -4,6 +4,7 @@ import json, joblib
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
 from credit_fraud_utils_eval import avg_pr_fb_score, model_eval_report
+from load_configs import Config
 
 def load_data(path: str, target_col_name='Class'):
     '''
@@ -109,27 +110,70 @@ def save_best_model(model, metadata, model_path:str|None=None, metadata_path:str
 
 
 
-def compare_evals_get_best_model(config=None):
-    models = ['linear_regression', 'random_forest', 'neural_network', 'neural_network_fl', 'knn_classifier','voting_classifier']
-    samples = ['rus', 'enn', 'smote', 'smoteenn', 'smotetomek']
+def compare_evals_retrain_best_model(config=None):
+    '''
+    1- Compare all evaluations for all models and get model with best f1-score
+    2- Retrain best model on full dataset (train + val)
+    3- Save retrained model & it's metadata (best model dir)
+    :param config: configurations
+    :return: None
+    '''
 
-    best_score = 0
+    # models and samples
+    models = [
+        'logistic_regression', 'random_forest', 'neural_network',
+        'neural_network_fl', 'knn_classifier','voting_classifier_1',
+        'voting_classifier_2', 'voting_classifier_3'
+    ]
+    samples = [
+        'rus', 'enn', 'smote',
+        'smoteenn', 'smotetomek'
+    ]
+
+    # initial values
+    best_f1_score = 0
     best_sample = ''
-    model_name = ''
+    best_model = ''
+    eval_data = ''
 
     for model in models:
         for sample in samples:
-            eval_path = config.MODELS[model][sample]['eval']
+            eval_path = config.MODELS[model]['sample'][sample]['eval']
+
+            # load eval json file
             with open(eval_path, 'r') as f:
                 eval = json.load(f)
 
-            if eval['results']['AUPRC'] > best_score:
-                best_score = eval['results']['AUPRC']
-                model_name = model
+            # check for better f1-score
+            if float(eval['classification_report(threshold=0.5)']['1']['f1-score']) > best_f1_score:
+                best_f1_score = float(eval['classification_report(threshold=0.5)']['1']['f1-score'])
+                best_model = model
                 best_sample = sample
+                eval_data = eval
 
-    # TODO
-    # save best model
+    # load model and it's metadata
+    model_path = config.MODELS[best_model]['sample'][best_sample]['model']
+    meta_path = config.MODELS[best_model]['sample'][best_sample]['metadata']
+    best_model = joblib.load(model_path)    # best model
+    with open(meta_path, 'r') as f:
+        metadata = json.load(f)
+
+    # load sampled full dataset (train + val)
+    X, t = get_processed_data(data_path=config.DATASET['sampled'][best_sample]['train_val']['data'],
+                              dtype='df', meta_path=config.DATASET['sampled'][best_sample]['train_val']['metadata'])
+    best_model.fit(X, t)    #refit on full dataset
+
+    all_data = {
+        **metadata,
+        **eval_data
+    }
+
+    # save best model that trained on full dataset (train + val)
+    joblib.dump(best_model, config.MODELS['best_model']['model'])
+    with open(config.MODELS['best_model']['metadata'], 'w') as f:
+        json.dump(all_data, f, indent=4)
+
+
 
 def parse_arg():
     '''
@@ -153,14 +197,16 @@ def parse_arg():
 
     # add algorithm argument for model algorithm
     parser.add_argument('-alg', '--algorithm', type=str,
-                        choices=['lr', 'rf', 'nn','nn_fl','knn', 'vc'], default='lr',
+                        choices=['lr', 'rf', 'nn','nn_fl','knn', 'vc1', 'vc2', 'vc3'], default='lr',
                         help='model algorithm {'
                              'lr: linear regression / '
                              'rf: random forest / '
                              'nn: neural network / '
                              'nn_fl: neural network with Focal Loss  /  '
                              'knn: knn classifier       /   '
-                             'vc: voting classifier'
+                             'vc1: voting classifier 1'
+                             'vc2: voting classifier 2'
+                             'vc3: voting classifier 3'
                              '}')
 
     # add mode argument for processes ( train, eval, full )
