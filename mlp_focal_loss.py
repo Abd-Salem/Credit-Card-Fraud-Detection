@@ -233,7 +233,7 @@ class MLP_FL:
 
         # batching data
         dataset = _FraudDataSet(x_tr, t_tr)
-        data_loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True, num_workers=2)
+        data_loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True)
 
         for epoch in range(1, self.epochs + 1):
             epoch_loss = 0      # start value
