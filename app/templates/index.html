@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fraud Detection</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Credit Card Fraud Detection</h1>
+
+    <div class="actions">
+        <button type="button" id="dummy-btn">🎲 Generate Dummy Data</button>
+        <button type="button" id="submit-btn">🔍 Predict</button>
+    </div>
+
+    <div class="grid" id="fields"></div>
+    <div id="result"></div>
+
+    <script>
+        const FIELDS = ['Time', 'V1','V2','V3','V4','V5','V6','V7','V8','V9','V10',
+                        'V11','V12','V13','V14','V15','V16','V17','V18','V19','V20',
+                        'V21','V22','V23','V24','V25','V26','V27','V28','Amount'];
+
+        // Render fields
+        const grid = document.getElementById('fields');
+        FIELDS.forEach(name => {
+            grid.innerHTML += `
+                <div class="field">
+                    <label>${name}</label>
+                    <input type="number" step="any" id="${name}" value="0">
+                </div>`;
+        });
+
+        // Dummy data
+        document.getElementById('dummy-btn').addEventListener('click', () => {
+            FIELDS.forEach(name => {
+                let val;
+                if (name === 'Time')   val = (Math.random() * 172800).toFixed(2);
+                else if (name === 'Amount') val = (Math.random() * 500).toFixed(2);
+                else val = (Math.random() * 6 - 3).toFixed(4);
+                document.getElementById(name).value = val;
+            });
+        });
+
+        // Predict
+        document.getElementById('submit-btn').addEventListener('click', async () => {
+            const features = FIELDS.map(name => parseFloat(document.getElementById(name).value));
+            const res = await fetch('/predict', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({features})
+            });
+            const data = await res.json();
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = data.Fraud ? 'fraud' : 'legit';
+            resultDiv.innerText = data.Fraud
+                ? `🚨 FRAUD — Probability: ${(data.Probability * 100).toFixed(1)}%`
+                : `✅ LEGIT — Probability: ${(data.Probability * 100).toFixed(1)}%`;
+        });
+    </script>
+</body>
+</html>

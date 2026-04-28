@@ -1,0 +1,16 @@
+body { font-family: Arial, sans-serif; max-width: 900px; margin: 30px auto; padding: 0 20px; }
+h1 { text-align: center; }
+
+.actions { display: flex; gap: 10px; margin-bottom: 20px; }
+.actions button { flex: 1; padding: 10px; font-size: 1em; cursor: pointer; border: none; border-radius: 6px; }
+#dummy-btn { background: #6c757d; color: white; }
+#submit-btn { background: #007bff; color: white; }
+
+.grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 20px; }
+.field { display: flex; flex-direction: column; }
+.field label { font-size: 0.7em; color: #555; margin-bottom: 2px; }
+.field input { padding: 4px 6px; font-size: 0.8em; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; }
+
+#result { padding: 15px; font-size: 1.2em; text-align: center; border-radius: 6px; }
+.fraud { background: #ffe0e0; color: #c0392b; }
+.legit { background: #e0ffe0; color: #27ae60; }
