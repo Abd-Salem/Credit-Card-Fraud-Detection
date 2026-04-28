@@ -32,12 +32,12 @@ The trained model is served via a **FastAPI** — submit a transaction and get a
 - [Project Stages](#project-stages)
 - [Project Structure](#project-structure)
 - [Pipeline Architecture](#pipeline-architecture)
+- [Configuration](#configuration)
 - [Models](#models)
 - [Resampling Strategies](#resampling-strategies)
 - [Evaluation](#evaluation)
 - [Best Model](#best-model)
 - [Setup & Installation](#setup--installation)
-- [Configuration](#configuration)
 - [Results](#results)
 
 ---
@@ -154,7 +154,76 @@ The dataset is the well-known **[Kaggle Credit Card Fraud Detection](https://www
 ```
 
 All resampling happens **only on training data**. Validation and test sets remain untouched.
+---
 
+## Configuration
+
+All experiment parameters live in `configs.yml`:
+
+```yaml
+random_state: 34
+seed: 12
+
+dataset:
+  unprocessed:
+    train: 'split/train.csv'
+    val: 'split/val.csv'
+    train_val: 'split/train_val.csv'
+    test: 'split/test.csv'
+  sampled:
+    dir: 'processed_data/sampled'
+    # one dir per strategy: rus, enn, smote, smoteenn, smotetomek
+
+features:
+  input: ['Time', 'V1', ..., 'V28', 'Amount']
+  target: 'Class'
+
+preprocessing:
+  scaler: ['standard', 'robust']
+
+sampling:
+  techniques: ['rus', 'enn', 'smote', 'smoteenn', 'smotetomek']
+  params:
+    sampling_strategy: 'auto'
+    smote_kn: 5
+    enn_nn: 3
+
+models:
+  logistic_regression:
+    params:
+      solver: ['lbfgs', 'newton-cg', 'liblinear']
+      max_iter: [100, 500, 800, 1000, 2000]
+      class_weight: ['balanced', {1: 5}, {1: 10}, {1: 20}]
+  random_forest:
+    n_iter: 25
+    params:
+      n_estimators: [300, 400, 600]
+      max_depth: [15, 20, 25]
+      max_features: ['sqrt']
+  neural_network:
+    n_iter: 30
+    params:
+      hidden_layers: [[32], [64], [64,32], [128,64], [128,64,32]]
+      activation: ['relu', 'tanh']
+      batch_size: [32, 64, 128]
+  neural_network_fl:
+    params:
+      alpha: [0.25, 0.5, 0.75]
+      gamma: [2.0, 3.0]
+      hidden_layers: [[32], [64,32], [128,32], [128,64,32]]
+      epochs: [50, 100, 200]
+      patience: 30
+  knn_classifier:
+    params:
+      k: [3, 5, 7, 9]
+      weights: ['uniform', 'distance']
+      metric: ['manhattan', 'euclidean', 'minkowski']
+
+evaluation:
+  scoring: 'average_precision'   # AUPRC
+  beta: 2                        # F2-score
+  cv_folds: 5
+```
 ---
 
 ## Models
@@ -239,7 +308,7 @@ Voting weights: `[RF=2, NN=1, KNN=1]`
 | Metric | Score |
 |---|---|
 | AUPRC | 85.88% |
-| Best F1-Score (th=0.65) | 84.5% |
+| F1-Score (th=0.65) | 84.5% |
 
 > Full test evaluation details are logged in `best_model/best_model_test_score.json`
 
@@ -251,7 +320,7 @@ git clone https://github.com/Abd-Salem/Credit-Card-Fraud-Detection.git
 cd Credit-Card-Fraud-Detection
 
 # Create and activate conda environment
-conda create -n fraud-detection python=3.13
+conda create -n fraud-detection
 conda activate fraud-detection
 
 # Install dependencies
@@ -261,80 +330,9 @@ python -m pip install -r requirements.txt
 **Required packages include:**
 `scikit-learn`, `imbalanced-learn`, `torch`, `pandas`, `numpy`, `matplotlib`, `seaborn`, `scipy`, `joblib`, `pyyaml`, `fastapi`, `uvicorn`, `pydantic`, `jinja2`, `requests`
 
-> 💡 On Windows, if your Conda path contains spaces, always use `python -m pip install` instead of `pip install`.
 
 ---
 
-## Configuration
-
-All experiment parameters live in `configs.yml`:
-
-```yaml
-random_state: 34
-seed: 12
-
-dataset:
-  unprocessed:
-    train: 'split/train.csv'
-    val: 'split/val.csv'
-    train_val: 'split/train_val.csv'
-    test: 'split/test.csv'
-  sampled:
-    dir: 'processed_data/sampled'
-    # one dir per strategy: rus, enn, smote, smoteenn, smotetomek
-
-features:
-  input: ['Time', 'V1', ..., 'V28', 'Amount']
-  target: 'Class'
-
-preprocessing:
-  scaler: ['standard', 'robust']
-
-sampling:
-  techniques: ['rus', 'enn', 'smote', 'smoteenn', 'smotetomek']
-  params:
-    sampling_strategy: 'auto'
-    smote_kn: 5
-    enn_nn: 3
-
-models:
-  logistic_regression:
-    params:
-      solver: ['lbfgs', 'newton-cg', 'liblinear']
-      max_iter: [100, 500, 800, 1000, 2000]
-      class_weight: ['balanced', {1: 5}, {1: 10}, {1: 20}]
-  random_forest:
-    n_iter: 25
-    params:
-      n_estimators: [300, 400, 600]
-      max_depth: [15, 20, 25]
-      max_features: ['sqrt']
-  neural_network:
-    n_iter: 30
-    params:
-      hidden_layers: [[32], [64], [64,32], [128,64], [128,64,32]]
-      activation: ['relu', 'tanh']
-      batch_size: [32, 64, 128]
-  neural_network_fl:
-    params:
-      alpha: [0.25, 0.5, 0.75]
-      gamma: [2.0, 3.0]
-      hidden_layers: [[32], [64,32], [128,32], [128,64,32]]
-      epochs: [50, 100, 200]
-      patience: 30
-  knn_classifier:
-    params:
-      k: [3, 5, 7, 9]
-      weights: ['uniform', 'distance']
-      metric: ['manhattan', 'euclidean', 'minkowski']
-
-evaluation:
-  scoring: 'average_precision'   # AUPRC
-  beta: 2                        # F2-score
-  cv_folds: 5
-```
-
----
 
 ## Results
 
