@@ -9,3 +9,4 @@ split/
 # IDE files
 .idea/*
 __pycache__/*
+app/__pycache__/*
