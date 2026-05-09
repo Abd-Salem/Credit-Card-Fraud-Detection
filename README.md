@@ -21,6 +21,8 @@ The trained model is served via a **FastAPI** — submit a transaction and get a
   "label": "Fraud"
 }
 ```
+![Demo-Img](docs/app/Demo.png)
+
 
 > API built with **FastAPI** · Inference uses the best-performing model with tuned classification threshold
 ---
