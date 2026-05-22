@@ -5,11 +5,11 @@
 
 > A production-grade machine learning pipeline for detecting fraudulent credit card transactions — featuring classical ML ensembles, a custom PyTorch MLP with Focal Loss, aggressive resampling strategies, and YAML-driven configuration.
 ---
-## 🚀 Live Demo
+## Live Demo
 
 The trained model is served via a **FastAPI** — submit a transaction and get a fraud prediction with probability score in real time.
 
-👉 [***Fraud Classifier Live Demo***](http://127.0.0.1:8000)
+ [***Fraud Classifier Live Demo***](http://127.0.0.1:8000)
 
 
 ### Example Response
@@ -27,7 +27,7 @@ The trained model is served via a **FastAPI** — submit a transaction and get a
 > API built with **FastAPI** · Inference uses the best-performing model with tuned classification threshold
 ---
 
-## 📌 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Dataset](#dataset)
@@ -239,7 +239,7 @@ evaluation:
 | `KNeighborsClassifier` | Distance-based, sensitive to scale |
 | `MLPClassifier` (sklearn) | Shallow MLP for comparison |
 
-### 🔥 Custom PyTorch MLP with Focal Loss (`MLP_FL`)
+### Custom PyTorch MLP with Focal Loss (`MLP_FL`)
 
 A fully sklearn-compatible neural network estimator — split into two classes to avoid PyTorch / sklearn multiple inheritance conflicts:
 
@@ -255,7 +255,7 @@ Training features:
 FL(p_t) = -α_t · (1 - p_t)^γ · log(p_t)
 ```
 
-### 🗳 VotingClassifier (Ensemble)
+### VotingClassifier (Ensemble)
 
 - A soft-voting ensemble built from multiple base estimators retrained using their best hyperparameters found during RandomizedSearchCV, combining `LR`, `KNN`, `RF`, and `MLP` variants for a stronger, more stable prediction.
 ---
